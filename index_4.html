@@ -231,38 +231,18 @@
             // 2. Control de flux de l'app
             preguntesRespondides.push(preguntaActual.id);
 
-// 3. ENVIAMENT REAL AL BACKEND AMB FETCH (POST)
-            var dadesAEnviar = {
+            // 3. Log professional simulant la tramesa de dades estructurades
+            console.log("ENVIANT AL CONTROLADOR PHP -> ", {
                 pregunta_id: preguntaActual.id,
                 tipus: preguntaActual.tipus,
                 resposta: respostaGuardar
-            };
-
-            fetch('api/guardar_resposta.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dadesAEnviar) // Serialitzem l'objecte a cadena JSON
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Aquí veurem què ens respon el teu PHP des del servidor
-                console.log("RESPOSTA DEL SERVIDOR APACHE:", data);
-                
-                // Tanquem el modal i reprenem el vídeo només quan sabem que la xarxa ha respost
-                document.getElementById('modal-pregunta').style.display = 'none';
-                document.getElementById('pantalla-fosca').style.display = 'none';
-                player.playVideo();
-            })
-            .catch(error => {
-                console.error("Error en enviar la resposta al servidor:", error);
-                alert("Error de connexió. No s'ha pogut desar la teva resposta.");
-                
-                // En un entorn de producció aquí decidiries si deixes continuar a l'alumne o no
             });
-        }
 
+            // Tancar modal i reprendre
+            document.getElementById('modal-pregunta').style.display = 'none';
+            document.getElementById('pantalla-fosca').style.display = 'none';
+            player.playVideo();
+        }
     </script>
 </body>
 </html>
