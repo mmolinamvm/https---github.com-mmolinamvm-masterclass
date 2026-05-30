@@ -80,7 +80,30 @@
         var intervalEscolta;      
 
         // Array de preguntes: En el futur, això vindrà del Model de PHP
-        var llistatPreguntes = [];
+        var llistatPreguntes = [
+            { 
+                id: 1, 
+                segon: 10, 
+                tipus: "text", 
+                text: "Pregunta 1 (Lliure): Quins tres impactes de la industrialització s'esmenten?" 
+            },
+            { 
+                id: 2, 
+                segon: 25, 
+                tipus: "single", // Ràdio buttons
+                text: "Pregunta 2 (Opció única): És necessària la regulació en aquest punt?", 
+                opcions: ["Sí, totalment", "No, el mercat es regula sol", "Només en alguns casos"],
+                correcta: [0] // Índex de la resposta correcta
+            },
+            { 
+                id: 3, 
+                segon: 40, 
+                tipus: "multiple", // Checkboxes
+                text: "Pregunta 3 (Multiresposta): Quins elements formen part de la normativa?", 
+                opcions: ["Protecció de recursos", "Industrialització lliure", "Impacte ambiental", "Explotació il·limitada"],
+                correcta: [0, 2] // Els alumnes han de marcar l'opció 0 i la 2
+            }
+        ];
 
         // Array per controlar quines preguntes ja s'han mostrat i evitar bucles
         var preguntesRespondides = []; 
@@ -88,35 +111,11 @@
         // Variable per saber quina pregunta s'està responent actualment
         var preguntaActual = null;
 
-        // NOVA FUNCIÓ: Carregar preguntes des de l'API de PHP
-        function carregarPreguntesDelBackend() {
-            fetch('api/get_preguntes.php') // Petició GET per defecte
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("No s'han pogut carregar les preguntes");
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    llistatPreguntes = data; // Guardem les preguntes rebudes a la variable global
-                    console.log("Preguntes carregades des de PHP:", llistatPreguntes);
-                    
-                    // Un cop tenim les preguntes, ja podem carregar l'API de YouTube amb seguretat
-                    inicialitzarYouTubeAPI();
-                })
-                .catch(error => {
-                    console.error("Error carregant l'API de preguntes:", error);
-                    alert("Error del sistema en carregar les activitats interactives.");
-                });
-        }
-
-        // Hem mogut la càrrega de l'script de YouTube dins d'aquesta funció
-        function inicialitzarYouTubeAPI() {
-            var tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            var firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        }
+        // PAS 1: Carregar l'API de reproductors d'iFrame de YouTube asíncronament
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
         // Aquesta funció s'executa automàticament quan l'API de YouTube està 100% llista
         function onYouTubeIframeAPIReady() {
