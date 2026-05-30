@@ -24,13 +24,23 @@ $preguntes = [
         "id" => 2, 
         "segon" => 25, 
         "tipus" => "single",
-        "text" => "Pregunta 2: Per què és necessari regular l'explotació de recursos?"
+        "text" => "Pregunta 2: Per què és necessari regular l'explotació de recursos?",
+        "opcions" => [
+            ["id" => 0, "text" => "Perquè són il·limitats"],
+            ["id" => 1, "text" => "Per evitar l'esgotament i destrucció de l'entorn"],
+            ["id" => 2, "text" => "Només per motius econòmics"]
+        ]
     ],
     [
         "id" => 3, 
         "segon" => 40, 
         "tipus" => "multiple",
-        "text" => "Pregunta 3: Quina relació té això amb la normativa del medi natural?"
+        "text" => "Pregunta 3: Quina relació té això amb la normativa del medi natural?",
+        "opcions" => [
+            ["id" => 0, "text" => "Lleis de protecció d'espais"],
+            ["id" => 1, "text" => "No té cap relació"],
+            ["id" => 2, "text" => "Regulació de residus industrials"]
+        ]
     ]
 ];
 
