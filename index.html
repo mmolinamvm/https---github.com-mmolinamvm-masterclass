@@ -131,7 +131,7 @@
             // Busquem si hi ha alguna pregunta programada per a aquest segon exacte
             // i que no s'hagi respost encara
             var trobada = llistatPreguntes.find(function(p) {
-                return p.segon === segonActual && !pregundesRespondides.includes(p.id);
+                return p.segon === segonActual && !preguntesRespondides.includes(p.id);
             });
 
             if (trobada) {
@@ -161,7 +161,7 @@
             }
 
             // Registrem que aquesta pregunta ja s'ha fet
-            pregundesRespondides.push(preguntaActual.id);
+            preguntesRespondides.push(preguntaActual.id);
 
             // Log professional simulant l'enviament de dades d'esdeveniment
             console.log("ENVIANT AL BACKEND -> Pregunta ID: " + preguntaActual.id + " | Resposta: " + resposta);
