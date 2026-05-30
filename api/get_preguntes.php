@@ -25,7 +25,7 @@ $preguntes = [
         "segon" => 25, 
         "tipus" => "single",
         "text" => "Pregunta 2: Per què és necessari regular l'explotació de recursos?",
-        "opcions" => [ "Perquè són il·limitats","Per evitar l'esgotament i destrucció de l'entorn", "Només per motius econòmics" ]
+        "opcions" => [ "Perquè són il·limitats","Per evitar l'esgotament i destrucció de l'entorn", "Només per motius econòmics" ],
         "correcta" => 0
     ],
     [
