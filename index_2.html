@@ -78,28 +78,9 @@
 
         // Array de preguntes: En el futur, això vindrà del Model de PHP
         var llistatPreguntes = [
-            { 
-                id: 1, 
-                segon: 10, 
-                tipus: "text", 
-                text: "Pregunta 1 (Lliure): Quins tres impactes de la industrialització s'esmenten?" 
-            },
-            { 
-                id: 2, 
-                segon: 25, 
-                tipus: "single", // Ràdio buttons
-                text: "Pregunta 2 (Opció única): És necessària la regulació en aquest punt?", 
-                opcions: ["Sí, totalment", "No, el mercat es regula sol", "Només en alguns casos"],
-                correcta: [0] // Índex de la resposta correcta
-            },
-            { 
-                id: 3, 
-                segon: 40, 
-                tipus: "multiple", // Checkboxes
-                text: "Pregunta 3 (Multiresposta): Quins elements formen part de la normativa?", 
-                opcions: ["Protecció de recursos", "Industrialització lliure", "Impacte ambiental", "Explotació il·limitada"],
-                correcta: [0, 2] // Els alumnes han de marcar l'opció 0 i la 2
-            }
+            { id: 1, segon: 10, text: "Pregunta 1: Quins tres impactes de la industrialització s'esmenten?" },
+            { id: 2, segon: 25, text: "Pregunta 2: Per què és necessari regular l'explotació de recursos?" },
+            { id: 3, segon: 40, text: "Pregunta 3: Quina relació té això amb la normativa del medi natural?" }
         ];
 
         // Array per controlar quines preguntes ja s'han mostrat i evitar bucles
@@ -160,79 +141,38 @@
         }
 
         // PAS 4: Pausar el vídeo i mostrar el formulari
-        function llançarPregunta(pregunta) {
+        function llançarPregunta(textPregunta) {
             clearInterval(intervalEscolta); 
             player.pauseVideo();            
-            preguntaActual = pregunta; 
 
-            // Pintem l'enunciat
-            document.getElementById('enunciat').innerText = pregunta.text;
-            
-            // Generem el contingut del formulari segons el tipus de pregunta
-            var contenidorForm = document.getElementById('contenidor-formulari');
-            contenidorForm.innerHTML = ""; // Netegem respostes anteriors
-
-            if (pregunta.tipus === "text") {
-                contenidorForm.innerHTML = '<input type="text" id="resposta-text" placeholder="Escriu la teva resposta aquí...">';
-            } else if (pregunta.tipus === "single") {
-                pregunta.opcions.forEach(function(opcio, index) {
-                    contenidorForm.innerHTML += `
-                        <label style="display:block; margin: 8px 0; cursor:pointer;">
-                            <input type="radio" name="opcio-single" value="${index}"> ${opcio}
-                        </label>`;
-                });
-            } else if (pregunta.tipus === "multiple") {
-                pregunta.opcions.forEach(function(opcio, index) {
-                    contenidorForm.innerHTML += `
-                        <label style="display:block; margin: 8px 0; cursor:pointer;">
-                            <input type="checkbox" name="opcio-multiple" value="${index}"> ${opcio}
-                        </label>`;
-                });
-            }
-
-            // Mostrem el modal
+            // Mostrem la pregunta dinàmica al DOM
+            document.getElementById('enunciat').innerText = textPregunta;
             document.getElementById('modal-pregunta').style.display = 'block';
             document.getElementById('pantalla-fosca').style.display = 'block';
         }
 
         // PAS 5: Recollir la resposta i reprendre la classe
         function continuarVideo() {
-            var respostaGuardar = null;
+            var resposta = document.getElementById('resposta-alumne').value;
 
-            // 1. Processar la resposta segons el tipus
-            if (preguntaActual.tipus === "text") {
-                var textInput = document.getElementById('resposta-text').value;
-                if (textInput.trim() === "") return alert("Respon la pregunta de text.");
-                respostaGuardar = textInput;
-
-            } else if (preguntaActual.tipus === "single") {
-                var seleccionat = document.querySelector('input[name="opcio-single"]:checked');
-                if (!seleccionat) return alert("Selecciona una opció.");
-                respostaGuardar = parseInt(seleccionat.value); // Guardem l'índex seleccionat
-
-            } else if (preguntaActual.tipus === "multiple") {
-                var seleccionats = document.querySelectorAll('input[name="opcio-multiple"]:checked');
-                if (seleccionats.length === 0) return alert("Selecciona com a mínim una opció.");
-                
-                respostaGuardar = [];
-                seleccionats.forEach(function(cb) {
-                    respostaGuardar.push(parseInt(cb.value)); // Guardem un array d'índexs [0, 2]
-                });
+            if(resposta.trim() === "") {
+                alert("Si us plau, respon la pregunta.");
+                return;
             }
 
-            // 2. Control de flux de l'app
+            // Registrem que aquesta pregunta ja s'ha fet
             preguntesRespondides.push(preguntaActual.id);
 
-            // 3. Log professional simulant la tramesa de dades estructurades
-            console.log("ENVIANT AL CONTROLADOR PHP -> ", {
-                pregunta_id: preguntaActual.id,
-                tipus: preguntaActual.tipus,
-                resposta: respostaGuardar
-            });
+            // Log professional simulant l'enviament de dades d'esdeveniment
+            console.log("ENVIANT AL BACKEND -> Pregunta ID: " + preguntaActual.id + " | Resposta: " + resposta);
 
-            // Tancar modal i reprendre
+            // Netejem l'input per a la següent pregunta
+            document.getElementById('resposta-alumne').value = "";
+
+            // Amaguem el modal i reprenem el vídeo
             document.getElementById('modal-pregunta').style.display = 'none';
             document.getElementById('pantalla-fosca').style.display = 'none';
+            
             player.playVideo();
         }
     </script>
