@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pràctica: El meu propi Edpuzzle</title>
+    <style>
+        /* Estils bàsics de l'aula */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Contenidor del vídeo */
+        #reproductor {
+            margin-top: 20px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /* FINESTRA MODAL (La caixa de la pregunta) */
+        #modal-pregunta {
+            display: none; /* Amagada per defecte */
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.3);
+            z-index: 100;
+            width: 90%; max-width: 400px;
+        }
+
+        /* Capa fosca de fons quan s'obre la pregunta */
+        #pantalla-fosca {
+            display: none; /* Amagada per defecte */
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 99;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white; padding: 10px 20px;
+            border: none; border-radius: 4px;
+            cursor: pointer; font-size: 16px;
+        }
+        input[type="text"] {
+            width: 100%; padding: 10px;
+            margin: 15px 0; border: 1px solid #ccc;
+            border-radius: 4px; box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Projecte: Vídeo Interactiu a l'Aula</h1>
+    <p>El vídeo es pausarà automàticament al <strong>segon 15</strong> per fer-te una pregunta.</p>
+
+    <div id="reproductor"></div>
+
+    <div id="pantalla-fosca"></div>
+    <div id="modal-pregunta">
+        <h3 id="enunciat">Aquí anirà la pregunta...</h3>
+        
+        <div id="contenidor-formulari"></div>
+        
+        <br>
+        <button onclick="continuarVideo()">Enviar i continuar</button>
+    </div>
+
+    <script>
+        // --- VARIABLES GLOBALS ---
+        var player;               
+        var intervalEscolta;      
+
+        // Array de preguntes: En el futur, això vindrà del Model de PHP
+        var llistatPreguntes = [];
+
+        // Array per controlar quines preguntes ja s'han mostrat i evitar bucles
+        var preguntesRespondides = []; 
+
+        // Variable per saber quina pregunta s'està responent actualment
+        var preguntaActual = null;
+
+        // NOVA FUNCIÓ: Carregar preguntes des de l'API de PHP
+        function carregarPreguntesDelBackend() {
+            fetch('api/get_preguntes.php') // Petició GET per defecte
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("No s'han pogut carregar les preguntes");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    llistatPreguntes = data; // Guardem les preguntes rebudes a la variable global
+                    console.log("Preguntes carregades des de PHP:", llistatPreguntes);
+                    
+                    // Un cop tenim les preguntes, ja podem carregar l'API de YouTube amb seguretat
+                    inicialitzarYouTubeAPI();
+                })
+                .catch(error => {
+                    console.error("Error carregant l'API de preguntes:", error);
+                    alert("Error del sistema en carregar les activitats interactives.");
+                });
+        }
+
+        // Hem mogut la càrrega de l'script de YouTube dins d'aquesta funció
+        function inicialitzarYouTubeAPI() {
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+
+        // Executem la funció de càrrega immediatament quan la pàgina web estigui llista
+        window.onload = function() {
+            carregarPreguntesDelBackend();
+        };
+        // Aquesta funció s'executa automàticament quan l'API de YouTube està 100% llista
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('reproductor', {
+                height: '360',
+                width: '640',
+                videoId: 'Oe2tzG4vI0o', // ID del vídeo de YouTube (Podeu canviar-lo pel vostre)
+                playerVars: {
+                    'controls': 1,      // Mostra els controls (0 per amagar-los en el futur)
+                    'rel': 0            // Recomana només vídeos del mateix canal
+                },
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        // PAS 2: El Bucle d'escolta (Temporitzador)
+        // Controla si el vídeo s'està reproduint per activar o apagar l'escolta
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                // Si el vídeo es reprodueix, revisem el temps cada 500ms (mig segon)
+                intervalEscolta = setInterval(comprovarTemps, 500);
+            } else {
+                // Si el vídeo es pausa o s'atura, netegem l'interval per no consumir recursos
+                clearInterval(intervalEscolta);
+            }
+        }
+
+        // PAS 3: El Disparador (Trigger)
+        function comprovarTemps() {
+            var segonActual = Math.floor(player.getCurrentTime());
+            console.log("Segon actual: " + segonActual);
+
+            // Busquem si hi ha alguna pregunta programada per a aquest segon exacte
+            // i que no s'hagi respost encara
+            var trobada = llistatPreguntes.find(function(p) {
+                return p.segon === segonActual && !preguntesRespondides.includes(p.id);
+            });
+
+            if (trobada) {
+                preguntaActual = trobada; // Guardem la referència
+                llançarPregunta(trobada);
+            }
+        }
+
+        // PAS 4: Pausar el vídeo i mostrar el formulari
+        function llançarPregunta(pregunta) {
+            clearInterval(intervalEscolta); 
+            player.pauseVideo();            
+            preguntaActual = pregunta; 
+
+            // Pintem l'enunciat
+            document.getElementById('enunciat').innerText = pregunta.text;
+            
+            // Generem el contingut del formulari segons el tipus de pregunta
+            var contenidorForm = document.getElementById('contenidor-formulari');
+            contenidorForm.innerHTML = ""; // Netegem respostes anteriors
+
+            if (pregunta.tipus === "text") {
+                contenidorForm.innerHTML = '<input type="text" id="resposta-text" placeholder="Escriu la teva resposta aquí...">';
+            } else if (pregunta.tipus === "single") {
+                pregunta.opcions.forEach(function(opcio, index) {
+                    contenidorForm.innerHTML += `
+                        <label style="display:block; margin: 8px 0; cursor:pointer;">
+                            <input type="radio" name="opcio-single" value="${index}"> ${opcio}
+                        </label>`;
+                });
+            } else if (pregunta.tipus === "multiple") {
+                pregunta.opcions.forEach(function(opcio, index) {
+                    contenidorForm.innerHTML += `
+                        <label style="display:block; margin: 8px 0; cursor:pointer;">
+                            <input type="checkbox" name="opcio-multiple" value="${index}"> ${opcio}
+                        </label>`;
+                });
+            }
+
+            // Mostrem el modal
+            document.getElementById('modal-pregunta').style.display = 'block';
+            document.getElementById('pantalla-fosca').style.display = 'block';
+        }
+
+        // PAS 5: Recollir la resposta i reprendre la classe
+        function continuarVideo() {
+            var respostaGuardar = null;
+
+            // 1. Processar la resposta segons el tipus
+            if (preguntaActual.tipus === "text") {
+                var textInput = document.getElementById('resposta-text').value;
+                if (textInput.trim() === "") return alert("Respon la pregunta de text.");
+                respostaGuardar = textInput;
+
+            } else if (preguntaActual.tipus === "single") {
+                var seleccionat = document.querySelector('input[name="opcio-single"]:checked');
+                if (!seleccionat) return alert("Selecciona una opció.");
+                respostaGuardar = parseInt(seleccionat.value); // Guardem l'índex seleccionat
+
+            } else if (preguntaActual.tipus === "multiple") {
+                var seleccionats = document.querySelectorAll('input[name="opcio-multiple"]:checked');
+                if (seleccionats.length === 0) return alert("Selecciona com a mínim una opció.");
+                
+                respostaGuardar = [];
+                seleccionats.forEach(function(cb) {
+                    respostaGuardar.push(parseInt(cb.value)); // Guardem un array d'índexs [0, 2]
+                });
+            }
+
+            // 2. Control de flux de l'app
+            preguntesRespondides.push(preguntaActual.id);
+
+// 3. ENVIAMENT REAL AL BACKEND AMB FETCH (POST)
+            var dadesAEnviar = {
+                pregunta_id: preguntaActual.id,
+                tipus: preguntaActual.tipus,
+                resposta: respostaGuardar
+            };
+
+            fetch('api/post_resposta.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dadesAEnviar) // Serialitzem l'objecte a cadena JSON
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Aquí veurem què ens respon el teu PHP des del servidor
+                console.log("RESPOSTA DEL SERVIDOR APACHE:", data);
+                
+                // Tanquem el modal i reprenem el vídeo només quan sabem que la xarxa ha respost
+                document.getElementById('modal-pregunta').style.display = 'none';
+                document.getElementById('pantalla-fosca').style.display = 'none';
+                player.playVideo();
+            })
+            .catch(error => {
+                console.error("Error en enviar la resposta al servidor:", error);
+                alert("Error de connexió. No s'ha pogut desar la teva resposta.");
+                
+                // En un entorn de producció aquí decidiries si deixes continuar a l'alumne o no
+            });
+        }
+
+    </script>
+</body>
+</html>
