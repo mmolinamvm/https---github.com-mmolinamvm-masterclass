@@ -73,21 +73,9 @@
 
     <script>
         // --- VARIABLES GLOBALS ---
-        var player;               
-        var intervalEscolta;      
-
-        // Array de preguntes: En el futur, això vindrà del Model de PHP
-        var llistatPreguntes = [
-            { id: 1, segon: 10, text: "Pregunta 1: Quins tres impactes de la industrialització s'esmenten?" },
-            { id: 2, segon: 25, text: "Pregunta 2: Per què és necessari regular l'explotació de recursos?" },
-            { id: 3, segon: 40, text: "Pregunta 3: Quina relació té això amb la normativa del medi natural?" }
-        ];
-
-        // Array per controlar quines preguntes ja s'han mostrat i evitar bucles
-        var preguntesRespondides = []; 
-
-        // Variable per saber quina pregunta s'està responent actualment
-        var preguntaActual = null;
+        var player;               // Guardarà la instància del reproductor de YouTube
+        var intervalEscolta;      // Guardarà el temporitzador (setInterval)
+        var preguntaLlançada = false; // Flag per evitar que la pregunta es repeteixi en bucle al mateix segon
 
         // PAS 1: Carregar l'API de reproductors d'iFrame de YouTube asíncronament
         var tag = document.createElement('script');
@@ -125,28 +113,24 @@
 
         // PAS 3: El Disparador (Trigger)
         function comprovarTemps() {
+            // Obtenim el segon actual eliminant els decimals
             var segonActual = Math.floor(player.getCurrentTime());
-            console.log("Segon actual: " + segonActual);
+            console.log("Segon actual del vídeo: " + segonActual); // Ideal perquè els alumnes ho vegin a la consola
 
-            // Busquem si hi ha alguna pregunta programada per a aquest segon exacte
-            // i que no s'hagi respost encara
-            var trobada = llistatPreguntes.find(function(p) {
-                return p.segon === segonActual && !pregundesRespondides.includes(p.id);
-            });
-
-            if (trobada) {
-                preguntaActual = trobada; // Guardem la referència
-                llançarPregunta(trobada.text);
+            // Condició: Si arribem al segon 15 i la pregunta encara no s'ha fet...
+            if (segonActual === 15 && !preguntaLlançada) {
+                llançarPregunta();
             }
         }
 
         // PAS 4: Pausar el vídeo i mostrar el formulari
-        function llançarPregunta(textPregunta) {
-            clearInterval(intervalEscolta); 
-            player.pauseVideo();            
+        function llançarPregunta() {
+            clearInterval(intervalEscolta); // Aturem el temporitzador
+            player.pauseVideo();            // Pausem el vídeo de YouTube mitjançant l'API
+            preguntaLlançada = true;        // Canviem el flag perquè no es torni a disparar al segon 15
 
-            // Mostrem la pregunta dinàmica al DOM
-            document.getElementById('enunciat').innerText = textPregunta;
+            // Modifiquem el DOM per mostrar la finestra modal a l'alumne
+            document.getElementById('enunciat').innerText = "Pregunta del segon 15: Per què creus que és important aquest concepte?";
             document.getElementById('modal-pregunta').style.display = 'block';
             document.getElementById('pantalla-fosca').style.display = 'block';
         }
@@ -155,24 +139,21 @@
         function continuarVideo() {
             var resposta = document.getElementById('resposta-alumne').value;
 
+            // Comprovació ràpida que l'alumne no ho deixi buit
             if(resposta.trim() === "") {
-                alert("Si us plau, respon la pregunta.");
+                alert("Si us plau, respon la pregunta abans de continuar.");
                 return;
             }
 
-            // Registrem que aquesta pregunta ja s'ha fet
-            pregundesRespondides.push(preguntaActual.id);
+            // Simulació de guardat de dades (De moment ho enviem a la consola)
+            console.log("DADA A GUARDAR -> Resposta de l'alumne: " + resposta);
+            alert("Resposta registrada correctament al sistema!");
 
-            // Log professional simulant l'enviament de dades d'esdeveniment
-            console.log("ENVIANT AL BACKEND -> Pregunta ID: " + preguntaActual.id + " | Resposta: " + resposta);
-
-            // Netejem l'input per a la següent pregunta
-            document.getElementById('resposta-alumne').value = "";
-
-            // Amaguem el modal i reprenem el vídeo
+            // Amaguem el formulari interactiu
             document.getElementById('modal-pregunta').style.display = 'none';
             document.getElementById('pantalla-fosca').style.display = 'none';
-            
+
+            // Reprenem el vídeo automàticament mitjançant l'API
             player.playVideo();
         }
     </script>
