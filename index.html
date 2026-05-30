@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pràctica: El meu propi Edpuzzle</title>
+    <style>
+        /* Estils bàsics de l'aula */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Contenidor del vídeo */
+        #reproductor {
+            margin-top: 20px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /* FINESTRA MODAL (La caixa de la pregunta) */
+        #modal-pregunta {
+            display: none; /* Amagada per defecte */
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.3);
+            z-index: 100;
+            width: 90%; max-width: 400px;
+        }
+
+        /* Capa fosca de fons quan s'obre la pregunta */
+        #pantalla-fosca {
+            display: none; /* Amagada per defecte */
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 99;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white; padding: 10px 20px;
+            border: none; border-radius: 4px;
+            cursor: pointer; font-size: 16px;
+        }
+        input[type="text"] {
+            width: 100%; padding: 10px;
+            margin: 15px 0; border: 1px solid #ccc;
+            border-radius: 4px; box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Projecte: Vídeo Interactiu a l'Aula</h1>
+    <p>El vídeo es pausarà automàticament al <strong>segon 15</strong> per fer-te una pregunta.</p>
+
+    <div id="reproductor"></div>
+
+    <div id="pantalla-fosca"></div>
+    <div id="modal-pregunta">
+        <h3 id="enunciat">Aquí anirà la pregunta...</h3>
+        <input type="text" id="resposta-alumne" placeholder="Escriu la teva resposta aquí...">
+        <button onclick="continuarVideo()">Enviar i continuar</button>
+    </div>
+
+    <script>
+        // --- VARIABLES GLOBALS ---
+        var player;               // Guardarà la instància del reproductor de YouTube
+        var intervalEscolta;      // Guardarà el temporitzador (setInterval)
+        var preguntaLlançada = false; // Flag per evitar que la pregunta es repeteixi en bucle al mateix segon
+
+        // PAS 1: Carregar l'API de reproductors d'iFrame de YouTube asíncronament
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // Aquesta funció s'executa automàticament quan l'API de YouTube està 100% llista
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('reproductor', {
+                height: '360',
+                width: '640',
+                videoId: 'Oe2tzG4vI0o', // ID del vídeo de YouTube (Podeu canviar-lo pel vostre)
+                playerVars: {
+                    'controls': 1,      // Mostra els controls (0 per amagar-los en el futur)
+                    'rel': 0            // Recomana només vídeos del mateix canal
+                },
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        // PAS 2: El Bucle d'escolta (Temporitzador)
+        // Controla si el vídeo s'està reproduint per activar o apagar l'escolta
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                // Si el vídeo es reprodueix, revisem el temps cada 500ms (mig segon)
+                intervalEscolta = setInterval(comprovarTemps, 500);
+            } else {
+                // Si el vídeo es pausa o s'atura, netegem l'interval per no consumir recursos
+                clearInterval(intervalEscolta);
+            }
+        }
+
+        // PAS 3: El Disparador (Trigger)
+        function comprovarTemps() {
+            // Obtenim el segon actual eliminant els decimals
+            var segonActual = Math.floor(player.getCurrentTime());
+            console.log("Segon actual del vídeo: " + segonActual); // Ideal perquè els alumnes ho vegin a la consola
+
+            // Condició: Si arribem al segon 15 i la pregunta encara no s'ha fet...
+            if (segonActual === 15 && !preguntaLlançada) {
+                llançarPregunta();
+            }
+        }
+
+        // PAS 4: Pausar el vídeo i mostrar el formulari
+        function llançarPregunta() {
+            clearInterval(intervalEscolta); // Aturem el temporitzador
+            player.pauseVideo();            // Pausem el vídeo de YouTube mitjançant l'API
+            preguntaLlançada = true;        // Canviem el flag perquè no es torni a disparar al segon 15
+
+            // Modifiquem el DOM per mostrar la finestra modal a l'alumne
+            document.getElementById('enunciat').innerText = "Pregunta del segon 15: Per què creus que és important aquest concepte?";
+            document.getElementById('modal-pregunta').style.display = 'block';
+            document.getElementById('pantalla-fosca').style.display = 'block';
+        }
+
+        // PAS 5: Recollir la resposta i reprendre la classe
+        function continuarVideo() {
+            var resposta = document.getElementById('resposta-alumne').value;
+
+            // Comprovació ràpida que l'alumne no ho deixi buit
+            if(resposta.trim() === "") {
+                alert("Si us plau, respon la pregunta abans de continuar.");
+                return;
+            }
+
+            // Simulació de guardat de dades (De moment ho enviem a la consola)
+            console.log("DADA A GUARDAR -> Resposta de l'alumne: " + resposta);
+            alert("Resposta registrada correctament al sistema!");
+
+            // Amaguem el formulari interactiu
+            document.getElementById('modal-pregunta').style.display = 'none';
+            document.getElementById('pantalla-fosca').style.display = 'none';
+
+            // Reprenem el vídeo automàticament mitjançant l'API
+            player.playVideo();
+        }
+    </script>
+</body>
+</html>
