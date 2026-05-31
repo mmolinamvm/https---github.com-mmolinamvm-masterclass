@@ -6,8 +6,8 @@ header("Access-Control-Allow-Methods: GET");
 // 1. Connexió PDO
 $host = 'localhost';
 $db   = 'masterclass_db'; 
-$user = 'root';           
-$pass = '';               
+$user = 'masterclass_user';           
+$pass = 'ContrasenyaSegura123!';               
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
