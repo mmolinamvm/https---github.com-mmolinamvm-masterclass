@@ -68,7 +68,7 @@ function comprovarTemps() {
     });
 
     if (trobada && document.getElementById('modal-pregunta').style.display !== 'block') {
-        lllançarPregunta(trobada);
+        llançarPregunta(trobada);
     }
 }
 
