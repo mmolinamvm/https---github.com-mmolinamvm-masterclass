@@ -23,10 +23,13 @@ class PreguntaController {
         
         if (!$video_info) {
             http_response_code(404);
-            echo json_encode(["status" => "error", "message" => "El vídeo sol·licitat no existeix"]);
+            echo json_encode([
+                "status" => "error", 
+                "message" => "El vídeo amb ID " . $video_id . " no s'ha trobat a la base de dades. Revisa si has omplert la taula 'videos'."
+            ]);
             exit;
         }
-        
+
         // 2. Li demanem les dades processades
         // $dades = $model->getAllWithOpcions();
         $preguntes = $model->getByVideoIdWithOpcions(intval($video_id));
