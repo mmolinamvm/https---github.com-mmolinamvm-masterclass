@@ -10,31 +10,9 @@ var codiYouTubeActual = "";
 const urlParams = new URLSearchParams(window.location.search);
 const videoIdActual = urlParams.get('video') || 1; // Si no hi ha cap, per defecte posem el 1
 
-function carregarPreguntesDelBackend() {
-    fetch(`index.php?action=api/get_preguntes&video_id=${videoIdActual}`) 
-        .then(response => {
-            if (!response.ok) throw new Error("No s'han pogut carregar les dades del vídeo");
-            return response.json();
-        })
-        .then(data => {
-            // Guardem el codi de YouTube que ve de la Base de Dades!
-            codiYouTubeActual = data.codi_youtube; 
-            
-            // Guardem les preguntes que ara pengen de data.preguntes
-            llistatPreguntes = data.preguntes; 
-            
-            // Opcional: Podem canviar el títol de la pàgina dinàmicament per millorar l'experiència de l'alumne
-            if(data.titol) {
-                document.querySelector('h1').innerText = data.titol;
-            }
-
-            console.log("Dades del vídeo dinàmic carregades:", data);
-            inicialitzarYouTubeAPI();
-        })
-        .catch(error => {
-            console.error("Error carregant l'API:", error);
-        });
-}
+window.onload = function() {
+    inicialitzarYouTubeAPI();
+};
 
 function inicialitzarYouTubeAPI() {
     var tag = document.createElement('script');
@@ -43,18 +21,54 @@ function inicialitzarYouTubeAPI() {
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 }
 
-window.onload = function() {
-    carregarPreguntesDelBackend();
-};
-
+// PAS 2: YouTube es descarrega i crida aquesta funció automàticament.
+// En lloc de crear el player directament, primer anem a buscar les dades al backend!
 function onYouTubeIframeAPIReady() {
+    console.log("API de YouTube a punt. Sol·licitant dades del vídeo...");
+    carregarPreguntesDelBackend();
+}
+
+// PAS 3: El backend respon amb el codi de YouTube i les preguntes
+function carregarPreguntesDelBackend() {
+    fetch(`index.php?action=api/get_preguntes&video_id=${videoIdActual}`) 
+        .then(response => {
+            if (!response.ok) throw new Error("No s'han pogut carregar les dades del vídeo");
+            return response.json();
+        })
+        .then(data => {
+            console.log("Dades rebudes del backend:", data);
+
+            // Guardem de forma segura la informació del vídeo i les preguntes
+            codiYouTubeActual = data.codi_youtube; 
+            llistatPreguntes = data.preguntes || []; 
+            
+            if(data.titol) {
+                document.querySelector('h1').innerText = data.titol;
+            }
+
+            // PAS 4: Ara que tenim el codiYouTubeActual de veritat, instanciem el reproductor!
+            crearReproductorYouTube();
+        })
+        .catch(error => {
+            console.error("Error carregant l'API del backend:", error);
+        });
+}
+
+// PAS 5: Funció aïllada que munta el Player de forma segura
+function crearReproductorYouTube() {
+    if (!codiYouTubeActual) {
+        console.error("Error: No es pot crear el reproductor sense un codi de YouTube vàlid.");
+        return;
+    }
+
     player = new YT.Player('reproductor', {
         height: '360',
         width: '640',
-        videoId: codiYouTubeActual, 
+        videoId: codiYouTubeActual, // Ara està garantit que té el valor de la BD
         playerVars: { 'controls': 1, 'rel': 0 },
         events: { 'onStateChange': onPlayerStateChange }
     });
+    console.log("Reproductor instanciat amb el vídeo:", codiYouTubeActual);
 }
 
 function onPlayerStateChange(event) {
