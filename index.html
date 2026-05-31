@@ -229,18 +229,20 @@
             if (pregunta.tipus === "text") {
                 contenidorForm.innerHTML = '<input type="text" id="resposta-text" autofocus placeholder="Escriu la teva resposta aquí...">';
             } else if (pregunta.tipus === "single") {
-                pregunta.opcions.forEach(function(opcio, index) {
-                    contenidorForm.innerHTML += `
-                        <label class="opcio-bloc">
-                            <input type="radio" name="opcio-single" value="${index}"> <span>${opcio}</span>
-                        </label>`;
+                pregunta.opcions.forEach(function(opcio) {
+                            // CORREGIT: Usem opcio.id com a value i opcio.text_opcio per visualitzar el text
+                            contenidorForm.innerHTML += `
+                                <label class="opcio-bloc">s
+                                    <input type="radio" name="opcio-single" value="${opcio.id}"> <span>${opcio.text_opcio}</span>
+                                </label>`;
                 });
             } else if (pregunta.tipus === "multiple") {
-                pregunta.opcions.forEach(function(opcio, index) {
-                    contenidorForm.innerHTML += `
-                        <label class="opcio-bloc">
-                            <input type="checkbox" name="opcio-multiple" value="${index}"> <span>${opcio}</span>
-                        </label>`;
+                pregunta.opcions.forEach(function(opcio) {
+                            // CORREGIT: El mateix per a opció múltiple
+                            contenidorForm.innerHTML += `
+                                <label class="opcio-bloc">
+                                    <input type="checkbox" name="opcio-multiple" value="${opcio.id}"> <span>${opcio.text_opcio}</span>
+                                </label>`;
                 });
             }
 
