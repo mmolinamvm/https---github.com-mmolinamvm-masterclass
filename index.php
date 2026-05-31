@@ -33,7 +33,7 @@ switch ($action) {
             exit;
         }
         $controller = new src\Controllers\RespostaController();
-        $controller->guardar();
+        $controller->store();
         break;
 
     default:
