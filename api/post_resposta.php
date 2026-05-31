@@ -1,48 +1,87 @@
 <?php
-// Capçaleres obligatòries per a una API JSON RESTful
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type");
 
-// 1. Validació del mètode HTTP (Enrutament bàsic)
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(["status" => "error", "message" => "Mètode no permès. Requerit: POST."]);
-    exit();
-}
-
-// 2. Captura del flux d'entrada (Raw input stream)
-$json_pures = file_get_contents("php://input");
-$dades = json_decode($json_pures, true); // Deserialitzem a un array associatiu de PHP
-
-// 3. Validació de dades estructurals (Defensa del controlador)
-if (json_last_error() !== JSON_ERROR_NONE) {
-    http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "JSON mal formatulat."]);
-    exit();
-}
+// 1. Captura del flux d'entrada (JSON asíncron del fetch)
+$json_pur = file_get_contents("php://input");
+$dades = json_decode($json_pur, true);
 
 if (!isset($dades['pregunta_id']) || !isset($dades['tipus']) || !isset($dades['resposta'])) {
-    http_response_code(422); // Unprocessable Entity
-    echo json_encode(["status" => "error", "message" => "Dades incompletes (Falten camps obligatoris)."]);
+    http_response_code(400);
+    echo json_encode(["status" => "error", "message" => "Dades d'entrada incompletes."]);
     exit();
 }
 
-// 4. Extracció i sanejament bàsic (Simulació del que faria el teu Model/Repository)
 $pregunta_id = intval($dades['pregunta_id']);
-$tipus = filter_var($dades['tipus'], FILTER_SANITIZE_SPECIAL_CHARS);
-$resposta_alumne = $dades['resposta']; // Pot ser un String o un Array
+$tipus       = $dades['tipus'];
+$resposta    = $dades['resposta'];
+$alumne_id   = 1; // ID de proves (Mock) fins que implementis la sessió de l'aula
 
-// 5. Resposta d'èxit per comprovar el servidor (Eco del que hem rebut)
-http_response_code(200);
-echo json_encode([
-    "status" => "success",
-    "message" => "Resposta rebuda correctament al servidor!",
-    "dades_processades" => [
-        "pregunta_id" => $pregunta_id,
-        "tipus" => $tipus,
-        "resposta" => $resposta_alumne,
-        "fet_a_les" => date("Y-m-d H:i:s")
-    ]
-]);
+// 2. Connexió PDO amb les credencials del teu script de Reset
+$host = 'localhost';
+$db   = 'masterclass_db';
+$user = 'masterclass_user';
+$pass = 'ContrasenyaSegura123!';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ]);
+
+    // 3. Iniciem una transacció atòmica
+    $pdo->beginTransaction();
+
+    if ($tipus === 'text') {
+        // Text lliure: va directe a la columna de text
+        $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, resposta_text) VALUES (?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$pregunta_id, $alumne_id, $resposta]);
+
+    } elseif ($tipus === 'single') {
+        // Opció única: comprovem que l'ID sigui un enter i guardem a la FK de l'opció
+        $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$pregunta_id, $alumne_id, intval($resposta)]);
+
+    } elseif ($tipus === 'multiple') {
+        // Opció múltiple: rebem un array de IDs reals (ex: [6, 4]).
+        // Preparem la sentència una sola vegada fora del bucle per optimitzar rendiment
+        $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+
+        // Fem una inserció a la taula per cada opció marcada per l'alumne
+        foreach ($resposta as $opcio_id) {
+            $stmt->execute([$pregunta_id, $alumne_id, intval($opcio_id)]);
+        }
+    }
+
+    // Si cap execució ha llançat una excepció, validem i guardem de manera persistent
+    $pdo->commit();
+
+    http_response_code(200);
+    echo json_encode([
+        "status" => "success",
+        "message" => "Resposta guardada correctament a MySQL!",
+        "dades_processades" => [
+            "pregunta_id" => $pregunta_id,
+            "tipus" => $tipus,
+            "fet_a_les" => date("Y-m-d H:i:s")
+        ]
+    ], JSON_UNESCAPED_UNICODE);
+
+} catch (\PDOException $e) {
+    // Si qualsevol de les línies o inserts falla, revertim l'estat per seguretat
+    if (isset($pdo) && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    http_response_code(500);
+    echo json_encode([
+        "status" => "error",
+        "message" => "Error a la Base de Dades: " . $e->getMessage()
+    ]);
+}
