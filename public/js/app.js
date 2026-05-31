@@ -6,7 +6,7 @@ var preguntaActual = null;
 var ultimTempsValid = 0; 
 
 function carregarPreguntesDelBackend() {
-    fetch('../api/get_preguntes.php') // Manté el camí relacional anterior temporalment
+    fetch('index.php?action=api/get_preguntes') // Manté el camí relacional anterior temporalment
         .then(response => {
             if (!response.ok) throw new Error("No s'han pogut carregar les preguntes");
             return response.json();
