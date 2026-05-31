@@ -15,10 +15,10 @@ class Pregunta {
     public function getVideoInfo($video_id) {
         $sql = "SELECT id, codi_youtube, titol, descripcio FROM videos WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$video_id]);
-        return $stmt->fetch(); // Retorna un array associatiu amb les dades del vídeo o false
+        $stmt->execute([intval($video_id)]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC); // Retorna un array associatiu amb les dades del vídeo o false
     }
-    
+
     // REVISAT: Passem el video_id per filtrar la consulta
     public function getByVideoIdWithOpcions($video_id) {
         $sql = "SELECT p.id AS pregunta_id, p.segon, p.tipus, p.text_pregunta,
