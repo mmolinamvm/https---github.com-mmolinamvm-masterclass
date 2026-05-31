@@ -4,9 +4,12 @@ var llistatPreguntes = [];
 var preguntesRespondides = []; 
 var preguntaActual = null;
 var ultimTempsValid = 0; 
+// Captura el paràmetre ?video=X de la URL del navegador de l'alumne
+const urlParams = new URLSearchParams(window.location.search);
+const videoIdActual = urlParams.get('video') || 1; // Si no hi ha cap, per defecte posem el 1
 
 function carregarPreguntesDelBackend() {
-    fetch('index.php?action=api/get_preguntes') // Manté el camí relacional anterior temporalment
+    fetch('index.php?action=api/get_preguntes&video_id=${videoIdActual}') // Manté el camí relacional anterior temporalment
         .then(response => {
             if (!response.ok) throw new Error("No s'han pogut carregar les preguntes");
             return response.json();
