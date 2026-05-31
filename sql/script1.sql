@@ -1,31 +1,90 @@
-CREATE database masterclass_db;
+-- =====================================================================
+-- SCRIPT GLOBAL DE RESET: USUARI, BASE DE DADES I CONFIGURACIÓ INICIAL
+-- =====================================================================
 
+-- 1. GESTIÓ DE L'USUARI DE L'APLICACIÓ (Entorn isolation de seguretat)
+-- Esborrem l'usuari si ja existia per evitar errors de duplicat
+DROP USER IF EXISTS 'masterclass_user'@'localhost';
+
+-- Creem l'usuari amb autenticació clàssica per contrasenya (Nivell DWES)
+CREATE USER 'masterclass_user'@'localhost' IDENTIFIED BY 'ContrasenyaSegura123!';
+
+-- 2. GESTIÓ DE LA BASE DE DADES
+DROP DATABASE IF EXISTS masterclass_db;
+CREATE DATABASE masterclass_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Assignem tots els privilegis a l'usuari web ÚNICAMENT sobre aquesta base de dades
+GRANT ALL PRIVILEGES ON masterclass_db.* TO 'masterclass_user'@'localhost';
+FLUSH PRIVILEGES;
+
+-- Ens situem al context de la base de dades creada per executar el DDL de les taules
 USE masterclass_db;
 
+-- =====================================================================
+-- 3. CREACIÓ DE L'ESTRUCTURA DE TAULES (DDL)
+-- =====================================================================
+
+-- Taula principal de Vídeos
+CREATE TABLE videos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titol VARCHAR(255) NOT NULL,
+    youtube_id VARCHAR(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Taula de Preguntes vinculades a un vídeo
 CREATE TABLE preguntes (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    video_id INT NOT NULL,
     segon INT NOT NULL,
     tipus ENUM('text', 'single', 'multiple') NOT NULL,
-    text_pregunta TEXT NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    text_pregunta TEXT NOT NULL,
+    FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Taula d'Opcions per a preguntes de tipus 'single' o 'multiple'
 CREATE TABLE opcions_pregunta (
     id INT AUTO_INCREMENT PRIMARY KEY,
     pregunta_id INT NOT NULL,
     text_opcio VARCHAR(255) NOT NULL,
+    es_correcta TINYINT(1) DEFAULT 0,
     FOREIGN KEY (pregunta_id) REFERENCES preguntes(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- INSERCIÓ DE DADES DE PROVA (Seeders)
-INSERT INTO preguntes (id, segon, tipus, text_pregunta) VALUES 
-(1, 10, 'text', 'Quins tres impactes de la industrialització es veuen al mapa?'),
-(2, 25, 'single', 'Quina d''aquestes normatives és la principal per al medi natural?'),
-(3, 40, 'multiple', 'Quins recursos es consideren exhauribles segons l''autor?');
+-- Taula on es persistiran les respostes dels alumnes
+CREATE TABLE respostes_alumnes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pregunta_id INT NOT NULL,
+    alumne_id INT NOT NULL,
+    resposta_text TEXT NULL,
+    opcio_seleccionada_id INT NULL,
+    data_resposta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pregunta_id) REFERENCES preguntes(id) ON DELETE CASCADE,
+    FOREIGN KEY (opcio_seleccionada_id) REFERENCES opcions_pregunta(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO opcions_pregunta (pregunta_id, text_opcio) VALUES 
-(2, 'Llei de l''Aigua 1985'),
-(2, 'Directiva Hàbitats 1992'),
-(2, 'Conveni de París'),
-(3, 'Combustibles fòssils'),
-(3, 'Energia solar'),
-(3, 'Mineria de terres rares');
+
+-- =====================================================================
+-- 4. INSERCIÓ DE DADES DE PROVA (Seeders)
+-- =====================================================================
+
+-- Inserim el vídeo de la teva unitat de medi natural
+INSERT INTO videos (id, titol, youtube_id) VALUES 
+(1, 'MP4 OI UF4 S1 - Normatives de protecció del medi natural', 'Oe2tzG4vI0o');
+
+-- Inserim les 3 preguntes reals
+INSERT INTO preguntes (id, video_id, segon, tipus, text_pregunta) VALUES 
+(1, 1, 10, 'text', 'Quins tres impactes de la industrialització es veuen al mapa?'),
+(2, 1, 25, 'single', 'Quina d''aquestes normatives és la principal per al medi natural?'),
+(3, 1, 40, 'multiple', 'Quins recursos es consideren exhauribles segons l''autor?');
+
+-- Pregunta 2 (Opció única): Forcem IDs de l'1 al 3
+INSERT INTO opcions_pregunta (id, pregunta_id, text_opcio, es_correcta) VALUES 
+(1, 2, 'Llei de l''Aigua 1985', 0),
+(2, 2, 'Directiva Hàbitats 1992', 1), -- La correcta
+(3, 2, 'Conveni de París', 0);
+
+-- Pregunta 3 (Opció múltiple): Forcem IDs del 4 al 6
+INSERT INTO opcions_pregunta (id, pregunta_id, text_opcio, es_correcta) VALUES 
+(4, 3, 'Combustibles fòssils', 1), -- Correcta
+(5, 3, 'Energia solar', 0),
+(6, 3, 'Mineria de terres rares', 1); -- Correcta
