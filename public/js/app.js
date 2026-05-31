@@ -130,7 +130,7 @@ function continuarVideo() {
         resposta: respostaGuardar
     };
 
-    fetch('../api/post_resposta.php', {
+    fetch('index.php?action=api/post_resposta', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dadesAEnviar)
