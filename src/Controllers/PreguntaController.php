@@ -6,6 +6,7 @@ use src\Models\Pregunta;
 class PreguntaController {
     
     public function index() {
+        die("SÍ, S'ESTÀ EXECUTANT EL CONTROLADOR CORRECTE");
         // Capturem el paràmetre de la URL, si no ve, donem un error 400
         $video_id = $_GET['video_id'] ?? null;
         
