@@ -4,19 +4,31 @@ var llistatPreguntes = [];
 var preguntesRespondides = []; 
 var preguntaActual = null;
 var ultimTempsValid = 0; 
+var codiYouTubeActual = "";
+
 // Captura el paràmetre ?video=X de la URL del navegador de l'alumne
 const urlParams = new URLSearchParams(window.location.search);
 const videoIdActual = urlParams.get('video') || 1; // Si no hi ha cap, per defecte posem el 1
 
 function carregarPreguntesDelBackend() {
-    fetch('index.php?action=api/get_preguntes&video_id=${videoIdActual}') // Manté el camí relacional anterior temporalment
+    fetch(`index.php?action=api/get_preguntes&video_id=${videoIdActual}`) 
         .then(response => {
-            if (!response.ok) throw new Error("No s'han pogut carregar les preguntes");
+            if (!response.ok) throw new Error("No s'han pogut carregar les dades del vídeo");
             return response.json();
         })
         .then(data => {
-            llistatPreguntes = data;
-            console.log("Preguntes carregades:", llistatPreguntes);
+            // Guardem el codi de YouTube que ve de la Base de Dades!
+            codiYouTubeActual = data.codi_youtube; 
+            
+            // Guardem les preguntes que ara pengen de data.preguntes
+            llistatPreguntes = data.preguntes; 
+            
+            // Opcional: Podem canviar el títol de la pàgina dinàmicament per millorar l'experiència de l'alumne
+            if(data.titol) {
+                document.querySelector('h1').innerText = data.titol;
+            }
+
+            console.log("Dades del vídeo dinàmic carregades:", data);
             inicialitzarYouTubeAPI();
         })
         .catch(error => {
@@ -39,7 +51,7 @@ function onYouTubeIframeAPIReady() {
     player = new YT.Player('reproductor', {
         height: '360',
         width: '640',
-        videoId: 'Oe2tzG4vI0o', 
+        videoId: codiYouTubeActual, 
         playerVars: { 'controls': 1, 'rel': 0 },
         events: { 'onStateChange': onPlayerStateChange }
     });

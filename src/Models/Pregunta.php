@@ -11,6 +11,14 @@ class Pregunta {
         $this->db = Database::getConnection();
     }
 
+    // NOU MÈTODE: Obtenir les dades pures del vídeo
+    public function getVideoInfo($video_id) {
+        $sql = "SELECT id, codi_youtube, titol, descripcio FROM videos WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$video_id]);
+        return $stmt->fetch(); // Retorna un array associatiu amb les dades del vídeo o false
+    }
+    
     // REVISAT: Passem el video_id per filtrar la consulta
     public function getByVideoIdWithOpcions($video_id) {
         $sql = "SELECT p.id AS pregunta_id, p.segon, p.tipus, p.text_pregunta,
@@ -49,7 +57,7 @@ class Pregunta {
         return array_values($preguntes_processades);
     }
 
-    
+
     public function getAllWithOpcions() {
         // La teva consulta original amb LEFT JOIN
         $sql = "SELECT p.id AS pregunta_id, p.segon, p.tipus, p.text_pregunta,
