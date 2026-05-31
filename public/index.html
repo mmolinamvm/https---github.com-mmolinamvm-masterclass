@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pràctica: El meu propi Edpuzzle</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }
+
+        .subtitol {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        /* Contenidor del vídeo amb vores arrodonides i ombra suau */
+        #reproductor {
+            margin-top: 10px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0px 8px 24px rgba(0,0,0,0.12);
+        }
+
+        /* FINESTRA MODAL MILLORADA */
+        #modal-pregunta {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0px 20px 40px rgba(0,0,0,0.25);
+            z-index: 100;
+            width: 90%; max-width: 450px;
+            box-sizing: border-box;
+        }
+
+        #enunciat {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        /* Capa fosca de fons amb un lleuger desenfocament blur (Molt modern) */
+        #pantalla-fosca {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 99;
+        }
+
+        /* Estilitzat d'opcions com a blocs clicables */
+        .opcio-bloc {
+            display: flex;
+            align-items: center;
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .opcio-bloc:hover {
+            background-color: #e8f4fd;
+            border-color: #3b82f6;
+        }
+        .opcio-bloc input {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        /* Botons moderns */
+        button {
+            background-color: #2563eb;
+            color: white; 
+            padding: 12px 24px;
+            border: none; 
+            border-radius: 6px;
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.2s;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        input[type="text"] {
+            width: 100%; 
+            padding: 12px;
+            margin: 15px 0; 
+            border: 2px solid #e9ecef;
+            border-radius: 6px; 
+            box-sizing: border-box;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus {
+            border-color: #2563eb;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Projecte: Vídeo Interactiu a l'Aula</h1>
+    <p class="subtitol">El vídeo es pausarà automàticament quan arribi a les activitats programades.</p>
+
+    <div id="reproductor"></div>
+
+    <div id="pantalla-fosca"></div>
+    <div id="modal-pregunta">
+        <h3 id="enunciat">Aquí anirà la pregunta...</h3>
+        <div id="contenidor-formulari"></div>
+        <button onclick="continuarVideo()">Enviar i continuar</button>
+    </div>
+
+    <script>
+        var player;              
+        var intervalEscolta;      
+        var llistatPreguntes = [];
+        var preguntesRespondides = []; 
+        var preguntaActual = null;
+        
+        // Control de seguretat per saber on es trobava l'usuari abans d'un salt temporal buida
+        var ultimTempsValid = 0; 
+
+        function carregarPreguntesDelBackend() {
+            fetch('../api/get_preguntes.php')
+                .then(response => {
+                    if (!response.ok) throw new Error("No s'han pogut carregar les preguntes");
+                    return response.json();
+                })
+                .then(data => {
+                    llistatPreguntes = data;
+                    console.log("Preguntes carregades:", llistatPreguntes);
+                    inicialitzarYouTubeAPI();
+                })
+                .catch(error => {
+                    console.error("Error carregant l'API:", error);
+                });
+        }
+
+        function inicialitzarYouTubeAPI() {
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+
+        window.onload = function() {
+            carregarPreguntesDelBackend();
+        };
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('reproductor', {
+                height: '360',
+                width: '640',
+                videoId: 'Oe2tzG4vI0o', 
+                playerVars: { 'controls': 1, 'rel': 0 },
+                events: { 'onStateChange': onPlayerStateChange }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                intervalEscolta = setInterval(comprovarTemps, 500);
+            } else {
+                clearInterval(intervalEscolta);
+            }
+        }
+
+        function comprovarTemps() {
+            var tempsActual = player.getCurrentTime();
+            var segonActual = Math.floor(tempsActual);
+            
+            // --- ANTI-TRAMPES (BLOQUEIG DE SALT) ---
+            // Si el salt de l'usuari és cap endavant i passa per sobre d'algun segon de pregunta no resposta, el tirem enrere.
+            llistatPreguntes.forEach(function(p) {
+                if (!preguntesRespondides.includes(p.id) && ultimTempsValid < p.segon && segonActual > p.segon) {
+                    player.seekTo(p.segon); // Torna a la casella de sortida de la pregunta
+                    segonActual = p.segon;
+                }
+            });
+            
+            // Actualitzem l'històric de seguretat del temps validat
+            ultimTempsValid = tempsActual;
+
+            // Busquem la pregunta corresponent
+            var trobada = llistatPreguntes.find(function(p) {
+                return p.segon === segonActual && !preguntesRespondides.includes(p.id);
+            });
+
+            // Afegim una condició extra: que no hi hagi un modal obert ja, evitant repeticions
+            if (trobada && document.getElementById('modal-pregunta').style.display !== 'block') {
+                llançarPregunta(trobada);
+            }
+        }
+
+        function llançarPregunta(pregunta) {
+            clearInterval(intervalEscolta); 
+            player.pauseVideo();            
+            preguntaActual = pregunta; 
+
+            document.getElementById('enunciat').innerText = pregunta.text;
+            var contenidorForm = document.getElementById('contenidor-formulari');
+            contenidorForm.innerHTML = ""; 
+
+            if (pregunta.tipus === "text") {
+                contenidorForm.innerHTML = '<input type="text" id="resposta-text" autofocus placeholder="Escriu la teva resposta aquí...">';
+            } else if (pregunta.tipus === "single") {
+                pregunta.opcions.forEach(function(opcio) {
+                            // CORREGIT: Usem opcio.id com a value i opcio.text_opcio per visualitzar el text
+                            contenidorForm.innerHTML += `
+                                <label class="opcio-bloc">
+                                    <input type="radio" name="opcio-single" value="${opcio.id}"> <span>${opcio.text_opcio}</span>
+                                </label>`;
+                });
+            } else if (pregunta.tipus === "multiple") {
+                pregunta.opcions.forEach(function(opcio) {
+                            // CORREGIT: El mateix per a opció múltiple
+                            contenidorForm.innerHTML += `
+                                <label class="opcio-bloc">
+                                    <input type="checkbox" name="opcio-multiple" value="${opcio.id}"> <span>${opcio.text_opcio}</span>
+                                </label>`;
+                });
+            }
+
+            document.getElementById('modal-pregunta').style.display = 'block';
+            document.getElementById('pantalla-fosca').style.display = 'block';
+        }
+
+        function continuarVideo() {
+            var respostaGuardar = null;
+
+            if (preguntaActual.tipus === "text") {
+                var textInput = document.getElementById('resposta-text').value;
+                if (textInput.trim() === "") return alert("Respon la pregunta de text.");
+                respostaGuardar = textInput;
+            } else if (preguntaActual.tipus === "single") {
+                var seleccionat = document.querySelector('input[name="opcio-single"]:checked');
+                if (!seleccionat) return alert("Selecciona una opció.");
+                respostaGuardar = parseInt(seleccionat.value);
+            } else if (preguntaActual.tipus === "multiple") {
+                var seleccionats = document.querySelectorAll('input[name="opcio-multiple"]:checked');
+                if (seleccionats.length === 0) return alert("Selecciona com a mínim una opció.");
+                
+                respostaGuardar = [];
+                seleccionats.forEach(function(cb) {
+                    respostaGuardar.push(parseInt(cb.value));
+                });
+            }
+
+            var dadesAEnviar = {
+                pregunta_id: preguntaActual.id,
+                tipus: preguntaActual.tipus,
+                resposta: respostaGuardar
+            };
+
+            fetch('../api/post_resposta.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dadesAEnviar)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Èxit de resposta desar:", data);
+                
+                // Passem pàgina correctament
+                preguntesRespondides.push(preguntaActual.id);
+                document.getElementById('modal-pregunta').style.display = 'none';
+                document.getElementById('pantalla-fosca').style.display = 'none';
+                player.playVideo();
+            })
+            .catch(error => {
+                console.error("Error xarxa:", error);
+                alert("Error desant dades. Revisa el servidor backend.");
+            });
+        }
+    </script>
+</body>
+</html>
