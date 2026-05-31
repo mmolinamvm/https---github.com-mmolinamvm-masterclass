@@ -46,6 +46,6 @@ class PreguntaController {
 
         // 3. Enviem la resposta JSON al client (Frontend)
         http_response_code(200);
-        echo json_encode($dades, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        echo json_encode($resposta, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 }
