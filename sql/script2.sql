@@ -1,4 +1,6 @@
 -- 1. Creem la taula de vídeos
+DROP TABLE IF EXISTS videos;
+
 CREATE TABLE IF NOT EXISTS videos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     codi_youtube VARCHAR(50) NOT NULL,
