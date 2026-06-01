@@ -71,9 +71,9 @@ CREATE TABLE respostes_alumnes (
 
 -- Inserim el vídeo de la teva unitat de medi natural
 -- 2. Injectem el vídeo actual per no perdre les dades
-INSERT INTO videos (id, codi_youtube, titol, descripcio) 
-VALUES (1, 'Oe2tzG4vI0o', 'Masterclass MP4 OI UF4 S1', 'Introducció a les normatives de protecció del medi natural'),
-VALUES (2, 'FgG8NSmc5Tg', 'Masterclass Perfil topogràfic', 'Com es fa un perfil topogràfic');
+INSERT INTO videos (id, codi_youtube, titol, descripcio) VALUES 
+(1, 'Oe2tzG4vI0o', 'Masterclass MP4 OI UF4 S1', 'Introducció a les normatives de protecció del medi natural'),
+(2, 'FgG8NSmc5Tg', 'Masterclass Perfil topogràfic', 'Com es fa un perfil topogràfic');
 
 -- 3. Modifiquem la taula preguntes per afegir la FK cap a vídeos
 ALTER TABLE preguntes ADD COLUMN video_id INT AFTER id;
