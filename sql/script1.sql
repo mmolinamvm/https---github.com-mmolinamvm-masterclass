@@ -72,7 +72,8 @@ CREATE TABLE respostes_alumnes (
 -- Inserim el vídeo de la teva unitat de medi natural
 -- 2. Injectem el vídeo actual per no perdre les dades
 INSERT INTO videos (id, codi_youtube, titol, descripcio) 
-VALUES (1, 'Oe2tzG4vI0o', 'Masterclass MP4 OI UF4 S1', 'Introducció a les normatives de protecció del medi natural');
+VALUES (1, 'Oe2tzG4vI0o', 'Masterclass MP4 OI UF4 S1', 'Introducció a les normatives de protecció del medi natural'),
+VALUES (2, 'FgG8NSmc5Tg', 'Masterclass Perfil topogràfic', 'Com es fa un perfil topogràfic');
 
 -- 3. Modifiquem la taula preguntes per afegir la FK cap a vídeos
 ALTER TABLE preguntes ADD COLUMN video_id INT AFTER id;
@@ -88,7 +89,10 @@ ALTER TABLE preguntes ADD CONSTRAINT fk_preguntes_videos FOREIGN KEY (video_id) 
 INSERT INTO preguntes (id, video_id, segon, tipus, text_pregunta) VALUES 
 (1, 1, 10, 'text', 'Quins tres impactes de la industrialització es veuen al mapa?'),
 (2, 1, 25, 'single', 'Quina d''aquestes normatives és la principal per al medi natural?'),
-(3, 1, 40, 'multiple', 'Quins recursos es consideren exhauribles segons l''autor?');
+(3, 1, 40, 'multiple', 'Quins recursos es consideren exhauribles segons l''autor?'),
+(4, 2, 10, 'text', 'Quin és el primer pas per fer un perfil topogràfic?'),
+(5, 2, 25, 'single', 'Quina fulla especial hem de fer servir per fer un perfil topogràfic?'),
+(6, 2, 40, 'multiple', 'Quins estris necessitem per fer un perfil topogràfic?');
 
 -- Pregunta 2 (Opció única): Forcem IDs de l'1 al 3
 INSERT INTO opcions_pregunta (id, pregunta_id, text_opcio, es_correcta) VALUES 
@@ -101,3 +105,15 @@ INSERT INTO opcions_pregunta (id, pregunta_id, text_opcio, es_correcta) VALUES
 (4, 3, 'Combustibles fòssils', 1), -- Correcta
 (5, 3, 'Energia solar', 0),
 (6, 3, 'Mineria de terres rares', 1); -- Correcta
+
+INSERT INTO opcions_pregunta (id, pregunta_id, text_opcio, es_correcta) VALUES 
+(7, 5, 'Fulla milimetrada', 1), -- Correcta
+(8, 5, 'Fulla de paper de ceba', 0), 
+(9, 5, 'Fulla quadriculada', 0);
+
+-- Pregunta 6 (Opció múltiple): Forcem IDs del 4 al 6
+INSERT INTO opcions_pregunta (id, pregunta_id, text_opcio, es_correcta) VALUES 
+(10, 6, 'regle', 1), -- Correcta
+(11, 6, 'fulla milimetrada', 1), -- Correcta
+(12, 6, 'lupa', 1),
+(13, 6, 'compàs', 0);
