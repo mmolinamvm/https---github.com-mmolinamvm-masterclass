@@ -36,9 +36,38 @@ switch ($action) {
         $controller->store();
         break;
 
-    default:
-        // Si no és una acció de l'API, serveix la vista estàtica del frontend
-        header("Content-Type: text/html; charset=UTF-8");
-        readfile(__DIR__ . '/public/index.html');
+    case 'api/login':
+        $controller = new src\Controllers\AuthController();
+        $controller->login();
+        break;
+
+    case 'logout':
+        $controller = new src\Controllers\AuthController();
+        $controller->logout();
+        break;
+
+default:
+        // 1. Iniciem la sessió (si no s'havia iniciat abans)
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // 2. COMPROVACIÓ: Té l'usuari la sessió iniciada?
+        if (!isset($_SESSION['usuari_id'])) {
+            // ❌ NO ha fet login: Li enviem la pantalla d'inici de sessió
+            header("Content-Type: text/html; charset=utf-8");
+            readfile(__DIR__ . '/public/login.html');
+        } else {
+            //  SÍ ha fet login: Mirem el seu rol per decidir on enviar-lo
+            header("Content-Type: text/html; charset=utf-8");
+            
+            if ($_SESSION['usuari_rol'] === 'professor') {
+                // En el futur, aquí carregaríem el panell del docent
+                echo "Benvingut Professor " . $_SESSION['nom'] . ". Aviat construirem el teu panell. <a href='index.php?action=logout'>Sortir</a>";
+            } else {
+                // Si és alumne, de moment el deixem passar al reproductor que ja tens fet!
+                readfile(__DIR__ . '/public/index.html');
+            }
+        }
         break;
 }
