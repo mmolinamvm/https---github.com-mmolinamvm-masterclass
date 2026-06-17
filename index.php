@@ -73,7 +73,7 @@ default:
             //  SÍ ha fet login: Mirem el seu rol per decidir on enviar-lo
             header("Content-Type: text/html; charset=utf-8");
             
-            if ($_SESSION['usuari_rol'] === 'professor') {
+            if (isset($_SESSION['usuari_rol']) && $_SESSION['usuari_rol'] === 'professor') {
                 // En el futur, aquí carregaríem el panell del docent
                 echo "Benvingut Professor " . $_SESSION['nom'] . ". Aviat construirem el teu panell. <a href='index.php?action=logout'>Sortir</a>";
             } else {
