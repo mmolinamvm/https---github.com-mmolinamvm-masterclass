@@ -46,6 +46,12 @@ switch ($action) {
         $controller->logout();
         break;
 
+// --- NOVA RUTA D'API PER AL DASHBOARD ---
+    case 'api/get_videos_alumne':
+        $controller = new src\Controllers\VideoController();
+        $controller->getVideosAlumne();
+        break;
+
 default:
         // 1. Iniciem la sessió (si no s'havia iniciat abans)
         if (session_status() === PHP_SESSION_NONE) {
@@ -66,7 +72,7 @@ default:
                 echo "Benvingut Professor " . $_SESSION['nom'] . ". Aviat construirem el teu panell. <a href='index.php?action=logout'>Sortir</a>";
             } else {
                 // Si és alumne, de moment el deixem passar al reproductor que ja tens fet!
-                readfile(__DIR__ . '/public/index.html');
+                readfile(__DIR__ . '/public/dashboard_alumne.html');
             }
         }
         break;
