@@ -3,7 +3,7 @@ namespace src\Models;
 
 use config\Database;
 
-class Pregunta {
+class Video {
     private $db;
 
     public function __construct() {
