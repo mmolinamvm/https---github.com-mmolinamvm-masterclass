@@ -1,6 +1,12 @@
 <?php
 // index.php - Front Controller
 
+// AFESTA AQUESTES 3 LÍNIES TEMPORALMENT PER TRAURE ELS ERRORS AMAGATS:
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// ... la resta del teu index.php habitual (autoloader, switch, etc.) ...
 // Autoload bàsic de classes per namespace (Molt útil per a DWES)
 spl_autoload_register(function ($class) {
     $prefix = '';
