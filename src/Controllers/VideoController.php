@@ -18,9 +18,9 @@ class VideoController {
         header('Content-Type: application/json; charset=utf-8');
 
         // Control d'accés: l'usuari ha de tenir sessió i ser alumne
-        if (!isset($_SESSION['usuari_id']) || $_SESSION['usuari_rol'] !== 'alumne') {
+        if (!isset($_SESSION['usuari_id']) || !isset($_SESSION['usuari_rol']) || $_SESSION['usuari_rol'] !== 'alumne') {
             http_response_code(403);
-            echo json_encode(["status" => "error", "message" => "Accés denegat."]);
+            echo json_encode(["status" => "error", "message" => "Accés denegat. Cal iniciar sessió com a alumne."]);
             exit;
         }
 
