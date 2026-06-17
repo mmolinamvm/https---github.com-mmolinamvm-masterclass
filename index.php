@@ -6,6 +6,11 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// 1. INICIEM LA SESSIÓ GLOBALMENT PER A TOTA L'APP (Rutes i APIs)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // ... la resta del teu index.php habitual (autoloader, switch, etc.) ...
 // Autoload bàsic de classes per namespace (Molt útil per a DWES)
 spl_autoload_register(function ($class) {
@@ -23,7 +28,7 @@ spl_autoload_register(function ($class) {
 $action = $_GET['action'] ?? 'home';
 
 // CORS Headers globals per a l'API
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
 header("Content-Type: application/json; charset=UTF-8");
 
 switch ($action) {
@@ -60,9 +65,9 @@ switch ($action) {
 
 default:
         // 1. Iniciem la sessió (si no s'havia iniciat abans)
-        if (session_status() === PHP_SESSION_NONE) {
+/*        if (session_status() === PHP_SESSION_NONE) {
             session_start();
-        }
+        }*/
 
         // 2. COMPROVACIÓ: Té l'usuari la sessió iniciada?
         if (!isset($_SESSION['usuari_id'])) {
@@ -73,7 +78,7 @@ default:
             //  SÍ ha fet login: Mirem el seu rol per decidir on enviar-lo
             header("Content-Type: text/html; charset=utf-8");
             
-            if (isset($_SESSION['usuari_rol']) && $_SESSION['usuari_rol'] === 'professor') {
+            if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'professor') {
                 // En el futur, aquí carregaríem el panell del docent
                 echo "Benvingut Professor " . $_SESSION['nom'] . ". Aviat construirem el teu panell. <a href='index.php?action=logout'>Sortir</a>";
             } else {
