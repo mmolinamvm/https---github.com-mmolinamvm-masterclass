@@ -28,8 +28,15 @@ spl_autoload_register(function ($class) {
 $action = $_GET['action'] ?? 'home';
 
 // CORS Headers globals per a l'API
-header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
-header("Content-Type: application/json; charset=UTF-8");
+if (array_key_exists('HTTP_ORIGIN', $_SERVER)) {
+    header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
+} else {
+    // Si entrem directament per navegador, podem posar per defecte el teu propi domini
+    header("Access-Control-Allow-Origin: http://www.masterclass.com");
+}
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
 switch ($action) {
     case 'api/get_preguntes':
