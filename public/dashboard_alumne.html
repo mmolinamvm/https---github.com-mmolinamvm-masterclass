@@ -69,7 +69,7 @@
                         // Determinem l'estat real barrejant caducitat i visualització
                         let estatVisual = v.estat;
                         let textBadge = v.estat;
-                        let estilBadge = `badge-${v.estat}`;
+                        let estilBadge = 'badge-${v.estat}';
                         let deshabilitat = false;
 
                         if (parseInt(v.esta_caducat) === 1) {
@@ -86,7 +86,7 @@
                         }
 
                         const card = document.createElement('div');
-                        card.className = `card-video estat-${estatVisual}`;
+                        card.className = 'card-video estat-${estatVisual}';
 
                         card.innerHTML = `
                             <div>

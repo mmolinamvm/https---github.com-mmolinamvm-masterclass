@@ -14,7 +14,8 @@ document.getElementById('formulari-login').addEventListener('submit', function(e
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email: email, password: password })
+        body: JSON.stringify({ email: email, password: password }),
+        credentials: 'include' // <--- ISOLAT I IMPRESCINDIBLE
     })
     .then(response => {
         // Retornem el JSON tant si és un estat 200 com si és un error (401, 400...)
