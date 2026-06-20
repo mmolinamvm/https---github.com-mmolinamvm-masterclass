@@ -70,28 +70,32 @@ switch ($action) {
         $controller->getVideosAlumne();
         break;
 
-default:
-        // 1. Iniciem la sessió (si no s'havia iniciat abans)
-/*        if (session_status() === PHP_SESSION_NONE) {
+// --- Dins del switch ($action) de l'index.php ---
+    default:
+        if (session_status() === PHP_SESSION_NONE) {
             session_start();
-        }*/
+        }
 
-        // 2. COMPROVACIÓ: Té l'usuari la sessió iniciada?
+        // 1. Si no hi ha sessió, bloquegem de forma estricta i servim el login
         if (!isset($_SESSION['usuari_id'])) {
-            // ❌ NO ha fet login: Li enviem la pantalla d'inici de sessió
             header("Content-Type: text/html; charset=utf-8");
             readfile(__DIR__ . '/public/login.html');
-        } else {
-            //  SÍ ha fet login: Mirem el seu rol per decidir on enviar-lo
+            exit;
+        }
+
+        // 2. 🌟 NOVA CONDICIÓ: Si s'ha enviat un paràmetre ?video=X a la URL, servim el reproductor dinàmic
+        if (isset($_GET['video'])) {
             header("Content-Type: text/html; charset=utf-8");
-            
-            if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'professor') {
-                // En el futur, aquí carregaríem el panell del docent
-                echo "Benvingut Professor " . $_SESSION['nom'] . ". Aviat construirem el teu panell. <a href='index.php?action=logout'>Sortir</a>";
-            } else {
-                // Si és alumne, de moment el deixem passar al reproductor que ja tens fet!
-                readfile(__DIR__ . '/public/dashboard_alumne.html');
-            }
+            readfile(__DIR__ . '/public/reproductor.html');
+            exit;
+        }
+
+        // 3. Si no hi ha paràmetre de vídeo, gestionem l'accés per rols normal
+        header("Content-Type: text/html; charset=utf-8");
+        if (isset($_SESSION['usuari_rol']) && $_SESSION['usuari_rol'] === 'professor') {
+            echo "Benvingut Professor " . htmlspecialchars($_SESSION['nom']) . ". Aviat construirem el teu panell. <a href='index.php?action=logout'>Sortir</a>";
+        } else {
+            readfile(__DIR__ . '/public/dashboard_alumne.html');
         }
         break;
 }

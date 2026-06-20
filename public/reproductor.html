@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor Interactiu - Masterclass</title>
+    <link rel="stylesheet" href="public/css/reproductor.css">
+</head>
+<body>
+
+    <div style="margin: 20px;">
+        <a href="index.php" style="text-decoration: none; font-weight: bold; color: #1a365d;">⬅️ Tornar al Panell</a>
+    </div>
+
+    <div id="reproductor-container" style="text-align: center; margin-top: 20px;">
+        <div id="reproductor"></div>
+    </div>
+
+    <div id="pantalla-fosca" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99;"></div>
+
+    <div id="modal-pregunta" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:30px; border-radius:8px; z-index:100; width:90%; max-width:500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <div id="contingut-pregunta"></div>
+    </div>
+
+    <script src="public/js/reproductor.js"></script>
+</body>
+</html>
