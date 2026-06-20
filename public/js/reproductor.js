@@ -98,7 +98,7 @@ function mostrarModalPregunta(pregunta) {
     preguntesRespondides.push(pregunta.id);
     const divContingut = document.getElementById('contingut-pregunta');
     
-    let htmlFormulari = `<h3>${pregunta.titol}</h3><p>${pregunta.descripcio || ''}</p><form id='form-resposta'>`;
+    let htmlFormulari = `<h3>${pregunta.text}</h3><p>${pregunta.descripcio || ''}</p><form id='form-resposta'>`;
 
     if (pregunta.tipus === 'text') {
         htmlFormulari += `<textarea id='resp-text' required style='width:100%; height:80px; margin-bottom:15px;'></textarea>`;
@@ -139,7 +139,7 @@ function enviarRespostaAlBackend() {
     }
 
     // 🌟 4. ENVIEM LA RESPOSTA REAPROFITANT LA SESSIÓ ACTIVA DE L'ALUMNE LOGUEJAT
-    fetch('index.php?action=api/post_resposta', {
+    fetch('index.php?action=api/post_resposta_alumne', {
         method: 'POST',
         headers: { 'Content-Type' : 'application/json' },
         body: JSON.stringify({

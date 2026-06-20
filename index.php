@@ -54,6 +54,16 @@ switch ($action) {
         $controller->store();
         break;
 
+    case 'api/post_resposta_alumne':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(["status" => "error", "message" => "Mètode no permès"]);
+            exit;
+        }
+        $controller = new src\Controllers\RespostaController();
+        $controller->store_resposta_alumne();
+        break;
+
     case 'api/login':
         $controller = new src\Controllers\AuthController();
         $controller->login();
