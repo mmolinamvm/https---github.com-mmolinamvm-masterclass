@@ -92,7 +92,7 @@ switch ($action) {
 
         // 3. Si no hi ha paràmetre de vídeo, gestionem l'accés per rols normal
         header("Content-Type: text/html; charset=utf-8");
-        if (isset($_SESSION['usuari_rol']) && $_SESSION['usuari_rol'] === 'professor') {
+        if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'professor') {
             echo "Benvingut Professor " . htmlspecialchars($_SESSION['nom']) . ". Aviat construirem el teu panell. <a href='index.php?action=logout'>Sortir</a>";
         } else {
             readfile(__DIR__ . '/public/dashboard_alumne.html');

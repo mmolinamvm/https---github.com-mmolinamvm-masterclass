@@ -141,7 +141,7 @@ function enviarRespostaAlBackend() {
     // 🌟 4. ENVIEM LA RESPOSTA REAPROFITANT LA SESSIÓ ACTIVA DE L'ALUMNE LOGUEJAT
     fetch('index.php?action=api/post_resposta', {
         method: 'POST',
-        headers: { 'Content-Type: application/json' },
+        headers: { 'Content-Type' : 'application/json' },
         body: JSON.stringify({
             pregunta_id: preguntaActual.id,
             tipus: preguntaActual.tipus,
