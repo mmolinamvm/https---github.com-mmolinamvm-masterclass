@@ -4,36 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El meu Panell - Masterclass</title>
-    <style>
-        body { font-family: sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 30px; }
-        .header h1 { margin: 0; color: #1a365d; }
-        .logout-link { color: #c53030; font-weight: bold; text-decoration: none; }
-        
-        .grid-videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card-video { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-top: 5px solid #cbd5e0; }
-        
-        /* Estats visuals dinàmics */
-        .estat-pendent { border-top-color: #ecc94b; } /* Groc */
-        .estat-vist { border-top-color: #4299e1; }    /* Blau */
-        .estat-completat { border-top-color: #48bb78; }/* Verd */
-        .estat-caducat { border-top-color: #e53e3e; opacity: 0.7; } /* Vermell */
-
-        .badge { display: inline-block; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 4px; text-transform: uppercase; margin-bottom: 10px; }
-        .badge-pendent { background: #fefcbf; color: #b7791f; }
-        .badge-vist { background: #ebf8ff; color: #2b6cb0; }
-        .badge-completat { background: #f0fff4; color: #2f855a; }
-        .badge-caducat { background: #fff5f5; color: #c53030; }
-
-        .titol-video { font-size: 18px; margin: 0 0 10px 0; color: #2d3748; }
-        .desc-video { font-size: 14px; color: #718096; margin-bottom: 15px; flex-grow: 1; }
-        
-        .info-repros { font-size: 12px; color: #4a5568; margin-bottom: 15px; }
-
-        .btn-accedir { display: block; text-align: center; background: #1a365d; color: white; padding: 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 14px; }
-        .btn-accedir:hover { background: #2a4365; }
-        .btn-disabled { background: #cbd5e0; color: #718096; cursor: not-allowed; pointer-events: none; }
-    </style>
+    
+    <link rel="stylesheet" href="/public/css/dashboard_alumne.css">
 </head>
 <body>
 
@@ -43,77 +15,9 @@
     </div>
 
     <h2>Els meus vídeos interactius</h2>
-    <div class="grid-videos" id="contenidor-videos">
-        </div>
+    
+    <div class="grid-videos" id="contenidor-videos"></div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Demanem els vídeos a la nova API afegint les credencials com a segon paràmetre
-        fetch('index.php?action=api/get_videos_alumne', { 
-            credentials: 'include' // <--- AQUÍ ES POSA
-        })
-            .then(response => {
-                if (!response.ok) throw new Error("No s'han pogut carregar les assignacions.");
-                return response.json();
-            })
-            .then(data => {
-                document.getElementById('nom-alumne').innerText = data.usuari_nom;
-                
-                const contenidor = document.getElementById('contenidor-videos'); 
-                contenidor.innerHTML = '';
-
-                if (data.videos.length === 0) {
-                    contenidor.innerHTML = '<p>Actualment no tens cap vídeo assignat.</p>';
-                    return;
-                }
-
-                data.videos.forEach(v => {
-                    // Determinem l'estat real barrejant caducitat i visualització
-                    let estatVisual = v.estat;
-                    let textBadge = v.estat;
-                    
-                    // CORREGIT: Canviades cometes simples per invertides per habilitar la variable ${v.estat}
-                    let estilBadge = `badge-${v.estat}`;
-                    let deshabilitat = false;
-
-                    if (parseInt(v.esta_caducat) === 1) {
-                        estatVisual = 'caducat';
-                        textBadge = 'Caducat';
-                        estilBadge = 'badge-caducat';
-                        deshabilitat = true; 
-                    }
-
-                    if (parseInt(v.reproduccions_restants) <= 0) {
-                        textBadge = 'Exhaurit';
-                        deshabilitat = true;
-                    }
-
-                    const card = document.createElement('div');
-                    // CORREGIT: Canviades cometes simples per invertides per habilitar la variable ${estatVisual}
-                    card.className = `card-video estat-${estatVisual}`;
-
-                    card.innerHTML = `
-                        <div>
-                            <span class="badge ${estilBadge}">${textBadge}</span>
-                            <h3 class="titol-video">${v.titol}</h3>
-                            <p class="desc-video">${v.descripcio || 'Sense descripció.'}</p>
-                            <div class="info-repros">
-                                🔄 Reproduccions restants: <strong>${v.reproduccions_restants}</strong><br>
-                                📅 Data límit: ${v.data_limit ? new Date(v.data_limit).toLocaleDateString() : 'Sense límit'}
-                            </div>
-                        </div>
-                        <a href="index.php?video=${v.id}" class="btn-accedir ${deshabilitat ? 'btn-disabled' : ''}">
-                            ${deshabilitat ? 'No disponible' : 'Mirar Vídeo'}
-                        </a>
-                    `;
-                    contenidor.appendChild(card);
-                });
-            })
-            .catch(error => {
-                console.error(error);
-                document.getElementById('contenidor-videos').innerHTML = '<p style="color:red;">Error en carregar les dades del panell.</p>';
-            });
-    });
-</script>
+    <script src="/public/js/dashboard_alumne.js"></script>
 </body>
 </html>
