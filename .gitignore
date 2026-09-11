@@ -6,6 +6,9 @@
 # (conté CREATE USER amb contrasenyes - NO pujar a GitHub)
 sql/init_db_user.sql
 
+# Token de GitHub (NO pujar mai!)
+config/token.txt
+
 # Fitxers temporals del sistema
 *.tmp
 *.swp
