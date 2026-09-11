@@ -20,7 +20,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     exit 1
 fi
 
-IFS='|' read -r FTP_HOST FTP_USER FTP_PASS FTP_DIR < "$CONFIG_FILE"
+IFS='|' read -r FTP_HOST FTP_USER FTP_PASS FTP_DIR < "$CONFIG_FILE" || true
 
 if [ -z "$FTP_HOST" ] || [ -z "$FTP_USER" ] || [ -z "$FTP_PASS" ] || [ -z "$FTP_DIR" ]; then
     echo "ERROR: config/ftp.txt debe tener el formato: host|usuario|password|directorio_remoto"
@@ -31,10 +31,18 @@ fi
 EXCLUDE=(
     ".git"
     ".gitignore"
+    ".opencode"
+    "ARCHITECTURE.md"
     "config/token.txt"
     "config/ftp.txt"
     "sql/init_db_user.sql"
     "bin/deploy.sh"
+    "bin/generar_hash.php"
+    "index_1.html"
+    "index_2.html"
+    "index_3.html"
+    "index_4.html"
+    "index_5.html"
 )
 
 is_excluded() {
