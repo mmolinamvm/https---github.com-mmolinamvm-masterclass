@@ -20,8 +20,8 @@ class Video {
         $sql = "SELECT v.id, v.titol, v.descripcio, v.codi_youtube,
                     uv.estat, uv.reproduccions_restants, uv.data_limit, uv.data_completat,
                     (uv.data_limit < NOW()) AS esta_caducat
-                FROM videos v
-                INNER JOIN usuari_videos uv ON v.id = uv.video_id
+                FROM mc_videos v
+                INNER JOIN mc_usuari_videos uv ON v.id = uv.video_id
                 WHERE uv.usuari_id = ?";
                 
         $stmt = $this->db->prepare($sql);

@@ -15,17 +15,17 @@ class Resposta {
 
         try {
             if ($tipus === 'text') {
-                $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, resposta_text) VALUES (?, ?, ?)";
+                $sql = "INSERT INTO mc_respostes_alumnes (pregunta_id, alumne_id, resposta_text) VALUES (?, ?, ?)";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute([$pregunta_id, $alumne_id, $resposta]);
 
             } elseif ($tipus === 'single') {
-                $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
+                $sql = "INSERT INTO mc_respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute([$pregunta_id, $alumne_id, intval($resposta)]);
 
             } elseif ($tipus === 'multiple') {
-                $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
+                $sql = "INSERT INTO mc_respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
                 $stmt = $this->db->prepare($sql);
 
                 foreach ($resposta as $opcio_id) {

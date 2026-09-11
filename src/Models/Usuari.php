@@ -17,7 +17,7 @@ class Usuari {
      */
     public function findByEmail($email) {
         $sql = "SELECT id, username, email, password_hash, nom, cognoms, rol 
-                FROM usuaris 
+                FROM mc_usuaris 
                 WHERE email = ?";
         
         $stmt = $this->db->prepare($sql);

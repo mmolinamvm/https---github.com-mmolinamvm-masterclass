@@ -13,7 +13,7 @@ class Pregunta {
 
     // NOU MÈTODE: Obtenir les dades pures del vídeo
     public function getVideoInfo($video_id) {
-        $sql = "SELECT id, codi_youtube, titol, descripcio FROM videos WHERE id = ?";
+        $sql = "SELECT id, codi_youtube, titol, descripcio FROM mc_videos WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([intval($video_id)]);
         return $stmt->fetch(\PDO::FETCH_ASSOC); // Retorna un array associatiu amb les dades del vídeo o false
@@ -23,8 +23,8 @@ class Pregunta {
     public function getByVideoIdWithOpcions($video_id) {
         $sql = "SELECT p.id AS pregunta_id, p.segon, p.tipus, p.text_pregunta,
                        o.id AS opcio_id, o.text_opcio
-                FROM preguntes p
-                LEFT JOIN opcions_pregunta o ON p.id = o.pregunta_id
+                FROM mc_preguntes p
+                LEFT JOIN mc_opcions_pregunta o ON p.id = o.pregunta_id
                 WHERE p.video_id = ?
                 ORDER BY p.segon ASC";
 
@@ -62,8 +62,8 @@ class Pregunta {
         // La teva consulta original amb LEFT JOIN
         $sql = "SELECT p.id AS pregunta_id, p.segon, p.tipus, p.text_pregunta,
                        o.id AS opcio_id, o.text_opcio
-                FROM preguntes p
-                LEFT JOIN opcions_pregunta o ON p.id = o.pregunta_id
+                FROM mc_preguntes p
+                LEFT JOIN mc_opcions_pregunta o ON p.id = o.pregunta_id
                 ORDER BY p.segon ASC";
 
         $stmt = $this->db->query($sql);

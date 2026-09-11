@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS usuaris (
+CREATE TABLE IF NOT EXISTS mc_usuaris (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS usuaris (
 
 -- Inserim un alumne de prova (Contrasenya: "alumne123")
 -- Nota: El hash s'ha generat amb el mètode oficial password_hash() de PHP
-INSERT INTO usuaris (username, email, password_hash, nom, cognoms, rol)
+INSERT INTO mc_usuaris (username, email, password_hash, nom, cognoms, rol)
 VALUES ('alumne1', 'alumne@masterclass.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Joan', 'Garcia', 'alumne');
 
 -- Inserim un professor de prova (Contrasenya: "profe123")
-INSERT INTO usuaris (username, email, password_hash, nom, cognoms, rol)
+INSERT INTO mc_usuaris (username, email, password_hash, nom, cognoms, rol)
 VALUES ('profe1', 'profe@masterclass.com', '$2y$10$5Kk7XwQ0hY7Vv2bHh8C8O.gE1E9qZ7YjW/U6Z7fG0oT2uG3vXFmUe', 'Marta', 'Prats', 'professor');

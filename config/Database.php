@@ -6,9 +6,9 @@ use PDOException;
 
 class Database {
     private static $host = 'localhost';
-    private static $db   = 'masterclass_db';
-    private static $user = 'masterclass_user';
-    private static $pass = 'ContrasenyaSegura123!';
+    private static $db   = 'guiamanudb';
+    private static $user = 'myguiamanu';
+    private static $pass = '@Asustek6247';
     private static $conn = null;
 
     public static function getConnection() {

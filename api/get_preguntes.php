@@ -5,9 +5,9 @@ header("Access-Control-Allow-Methods: GET");
 
 // 1. Connexió PDO
 $host = 'localhost';
-$db   = 'masterclass_db'; 
-$user = 'masterclass_user';           
-$pass = 'ContrasenyaSegura123!';               
+$db   = 'guiamanudb'; 
+$user = 'myguiamanu';           
+$pass = '@Asustek6247';               
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
@@ -18,8 +18,8 @@ try {
     // 2. Consulta amb LEFT JOIN per arreplegar les preguntes i les seves opcions (si en tenen)
     $sql = "SELECT p.id AS pregunta_id, p.segon, p.tipus, p.text_pregunta,
                    o.id AS opcio_id, o.text_opcio
-            FROM preguntes p
-            LEFT JOIN opcions_pregunta o ON p.id = o.pregunta_id
+            FROM mc_preguntes p
+            LEFT JOIN mc_opcions_pregunta o ON p.id = o.pregunta_id
             ORDER BY p.segon ASC";
 
     $stmt = $pdo->query($sql);

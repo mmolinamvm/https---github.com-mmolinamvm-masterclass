@@ -21,9 +21,9 @@ $alumne_id   = 1; // ID de proves (Mock) fins que implementis la sessió de l'au
 
 // 2. Connexió PDO amb les credencials del teu script de Reset
 $host = 'localhost';
-$db   = 'masterclass_db';
-$user = 'masterclass_user';
-$pass = 'ContrasenyaSegura123!';
+$db   = 'guiamanudb';
+$user = 'myguiamanu';
+$pass = '@Asustek6247';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
@@ -37,20 +37,20 @@ try {
 
     if ($tipus === 'text') {
         // Text lliure: va directe a la columna de text
-        $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, resposta_text) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO mc_respostes_alumnes (pregunta_id, alumne_id, resposta_text) VALUES (?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$pregunta_id, $alumne_id, $resposta]);
 
     } elseif ($tipus === 'single') {
         // Opció única: comprovem que l'ID sigui un enter i guardem a la FK de l'opció
-        $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO mc_respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$pregunta_id, $alumne_id, intval($resposta)]);
 
     } elseif ($tipus === 'multiple') {
         // Opció múltiple: rebem un array de IDs reals (ex: [6, 4]).
         // Preparem la sentència una sola vegada fora del bucle per optimitzar rendiment
-        $sql = "INSERT INTO respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO mc_respostes_alumnes (pregunta_id, alumne_id, opcio_seleccionada_id) VALUES (?, ?, ?)";
         $stmt = $pdo->prepare($sql);
 
         // Fem una inserció a la taula per cada opció marcada per l'alumne
