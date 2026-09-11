@@ -112,12 +112,18 @@ Base de dades: `guiamanudb` · Charset: `utf8mb4` · Engine: `InnoDB`
 
 ```
 mc_usuaris ──────────► mc_usuari_videos ◄────────── mc_videos
-                                          │
-                                          ▼
-                                     mc_preguntes ──────► mc_opcions_pregunta
-                                          │
-                                          ▼
-                                  mc_respostes_alumnes ◄── mc_usuaris
+     │  ▲                    │                        │
+     │  │                    │                        ▼
+     │  └── mc_grups_alumnes ◄── mc_grups        mc_preguntes ──► mc_opcions_pregunta
+     │                                              │
+     │                                              ▼
+     └────────────── mc_assignacions_videos ◄── mc_videos
+                          │
+                          ▼
+              mc_sessions_visualitzacio ◄── mc_usuaris
+                          │
+                          ▼
+              mc_respostes_alumnes ◄── mc_usuaris
 ```
 
 ### Taules
@@ -126,7 +132,9 @@ mc_usuaris ──────────► mc_usuari_videos ◄─────
 | Camp | Tipus | Descripció |
 |------|-------|-----------|
 | id | INT AUTO_INCREMENT PK | Identificador |
+| professor_id | INT NULL FK → mc_usuaris(id) SET NULL | Professor propietari |
 | codi_youtube | VARCHAR(50) | Codi del vídeo de YouTube |
+| youtube_url | VARCHAR(255) NULL | URL original enganxada pel profe |
 | titol | VARCHAR(255) | Títol del vídeo |
 | descripcio | TEXT | Descripció (nullable) |
 | data_creacio | TIMESTAMP | Data de creació |
@@ -154,6 +162,7 @@ mc_usuaris ──────────► mc_usuari_videos ◄─────
 | id | INT AUTO_INCREMENT PK | Identificador |
 | pregunta_id | INT NOT NULL FK → mc_preguntes(id) CASCADE | Pregunta resposta |
 | alumne_id | INT NOT NULL | ID de l'alumne |
+| sessio_id | INT NULL FK → mc_sessions_visualitzacio(id) SET NULL | Intent de visualització |
 | resposta_text | TEXT NULL | Resposta per a preguntes de tipus text |
 | opcio_seleccionada_id | INT NULL FK → mc_opcions_pregunta(id) SET NULL | Opció seleccionada |
 | data_resposta | TIMESTAMP | Data de la resposta |
@@ -181,6 +190,47 @@ mc_usuaris ──────────► mc_usuari_videos ◄─────
 | data_limit | DATETIME NULL | Data de caducitat |
 | data_completat | TIMESTAMP NULL | Data de completament |
 | UNIQUE | (usuari_id, video_id) | Evita duplicats |
+
+#### `mc_grups`
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| id | INT AUTO_INCREMENT PK | Identificador |
+| professor_id | INT NOT NULL FK → mc_usuaris(id) CASCADE | Professor creador |
+| nom | VARCHAR(100) | Nom del grup |
+| codi_uni | VARCHAR(10) UNIQUE | Codi d'accés per alumnes (ex: X7A9B2) |
+| data_creacio | TIMESTAMP | Data de creació |
+
+#### `mc_grups_alumnes` (taula de relació M:N)
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| id | INT AUTO_INCREMENT PK | Identificador |
+| grup_id | INT NOT NULL FK → mc_grups(id) CASCADE | Grup |
+| alumne_id | INT NOT NULL FK → mc_usuaris(id) CASCADE | Alumne |
+| data_alta | TIMESTAMP | Data d'incorporació |
+| UNIQUE | (grup_id, alumne_id) | Evita duplicats |
+
+#### `mc_assignacions_videos`
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| id | INT AUTO_INCREMENT PK | Identificador |
+| video_id | INT NOT NULL FK → mc_videos(id) CASCADE | Vídeo assignat |
+| grup_id | INT NULL FK → mc_grups(id) CASCADE | Grup complet (o NULL) |
+| alumne_id | INT NULL FK → mc_usuaris(id) CASCADE | Alumne individual (o NULL) |
+| disponible_desde | DATETIME NULL | Inici de vigència |
+| disponible_fins | DATETIME NULL | Caducitat |
+| max_visualitzacions | INT DEFAULT 3 | Límit de reproduccions |
+| data_creacio | TIMESTAMP | Data de creació |
+
+#### `mc_sessions_visualitzacio`
+| Camp | Tipus | Descripció |
+|------|-------|-----------|
+| id | INT AUTO_INCREMENT PK | Identificador |
+| assignacio_id | INT NOT NULL FK → mc_assignacions_videos(id) CASCADE | Assignació |
+| alumne_id | INT NOT NULL FK → mc_usuaris(id) CASCADE | Alumne |
+| numero_visualitzacio | INT DEFAULT 1 | 1a, 2a, 3a... visualització |
+| iniciada_a | TIMESTAMP | Inici de la sessió |
+| max_segon_visionat | INT DEFAULT 0 | Progrés màxim assolit |
+| completada | TINYINT(1) DEFAULT 0 | 1 si va completar el vídeo |
 
 ---
 

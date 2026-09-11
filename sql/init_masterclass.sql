@@ -16,6 +16,10 @@ USE guiamanudb;
 -- =====================================================================
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS mc_respostes_alumnes;
+DROP TABLE IF EXISTS mc_sessions_visualitzacio;
+DROP TABLE IF EXISTS mc_assignacions_videos;
+DROP TABLE IF EXISTS mc_grups_alumnes;
+DROP TABLE IF EXISTS mc_grups;
 DROP TABLE IF EXISTS mc_opcions_pregunta;
 DROP TABLE IF EXISTS mc_preguntes;
 DROP TABLE IF EXISTS mc_videos;
@@ -25,53 +29,14 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- =====================================================================
 -- 2. CREACIÓ DE L'ESTRUCTURA DE TAULES (DDL)
+--    Ordre: primer les taules sense dependències, després les que
+--    referencien (perquè les FK requereixen que la taula referenciada
+--    existeixi abans).
 -- =====================================================================
 
--- Taula principal de Vídeos
-CREATE TABLE mc_videos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    codi_youtube VARCHAR(50) NOT NULL,
-    titol VARCHAR(255) NOT NULL,
-    descripcio TEXT NULL,
-    data_creacio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Taula de Preguntes vinculades a un vídeo
-CREATE TABLE mc_preguntes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    video_id INT NOT NULL,
-    segon INT NOT NULL,
-    tipus ENUM('text', 'single', 'multiple') NOT NULL,
-    text_pregunta TEXT NOT NULL,
-    CONSTRAINT fk_preguntes_videos
-        FOREIGN KEY (video_id) REFERENCES mc_videos(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Taula d'Opcions per a preguntes de tipus 'single' o 'multiple'
-CREATE TABLE mc_opcions_pregunta (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    pregunta_id INT NOT NULL,
-    text_opcio VARCHAR(255) NOT NULL,
-    es_correcta TINYINT(1) DEFAULT 0,
-    CONSTRAINT fk_opcions_pregunta
-        FOREIGN KEY (pregunta_id) REFERENCES mc_preguntes(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Taula on es persistiran les respostes dels alumnes
-CREATE TABLE mc_respostes_alumnes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    pregunta_id INT NOT NULL,
-    alumne_id INT NOT NULL,
-    resposta_text TEXT NULL,
-    opcio_seleccionada_id INT NULL,
-    data_resposta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_respostes_pregunta
-        FOREIGN KEY (pregunta_id) REFERENCES mc_preguntes(id) ON DELETE CASCADE,
-    CONSTRAINT fk_respostes_opcio
-        FOREIGN KEY (opcio_seleccionada_id) REFERENCES mc_opcions_pregunta(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Taula d'Usuaris (alumnes i professors)
+-- ---------------------------------------------------------------
+-- 2.1 Taula d'Usuaris (alumnes i professors) - sense dependències
+-- ---------------------------------------------------------------
 CREATE TABLE mc_usuaris (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -83,7 +48,136 @@ CREATE TABLE mc_usuaris (
     data_creacio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Taula de relació Usuari - Vídeo (assignacions amb restriccions)
+-- ---------------------------------------------------------------
+-- 2.2 Taula principal de Vídeos (FK -> mc_usuaris)
+-- ---------------------------------------------------------------
+CREATE TABLE mc_videos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    professor_id INT NULL,
+    codi_youtube VARCHAR(50) NOT NULL,
+    youtube_url VARCHAR(255) NULL,
+    titol VARCHAR(255) NOT NULL,
+    descripcio TEXT NULL,
+    data_creacio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_videos_professor
+        FOREIGN KEY (professor_id) REFERENCES mc_usuaris(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------
+-- 2.3 Taula de Preguntes vinculades a un vídeo (FK -> mc_videos)
+-- ---------------------------------------------------------------
+CREATE TABLE mc_preguntes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    video_id INT NOT NULL,
+    segon INT NOT NULL,
+    tipus ENUM('text', 'single', 'multiple') NOT NULL,
+    text_pregunta TEXT NOT NULL,
+    CONSTRAINT fk_preguntes_videos
+        FOREIGN KEY (video_id) REFERENCES mc_videos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------
+-- 2.4 Taula d'Opcions per a preguntes (FK -> mc_preguntes)
+-- ---------------------------------------------------------------
+CREATE TABLE mc_opcions_pregunta (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pregunta_id INT NOT NULL,
+    text_opcio VARCHAR(255) NOT NULL,
+    es_correcta TINYINT(1) DEFAULT 0,
+    CONSTRAINT fk_opcions_pregunta
+        FOREIGN KEY (pregunta_id) REFERENCES mc_preguntes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------
+-- 2.5 Grups de classe creats per un professor (FK -> mc_usuaris)
+-- ---------------------------------------------------------------
+CREATE TABLE mc_grups (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    professor_id INT NOT NULL,
+    nom VARCHAR(100) NOT NULL,
+    codi_uni VARCHAR(10) NOT NULL UNIQUE,
+    data_creacio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_grups_professor
+        FOREIGN KEY (professor_id) REFERENCES mc_usuaris(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------
+-- 2.6 Relació M:N entre grups i alumnes (FK -> mc_grups, mc_usuaris)
+-- ---------------------------------------------------------------
+CREATE TABLE mc_grups_alumnes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    grup_id INT NOT NULL,
+    alumne_id INT NOT NULL,
+    data_alta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_ga_grup
+        FOREIGN KEY (grup_id) REFERENCES mc_grups(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ga_alumne
+        FOREIGN KEY (alumne_id) REFERENCES mc_usuaris(id) ON DELETE CASCADE,
+    UNIQUE KEY grup_alumne_unic (grup_id, alumne_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------
+-- 2.7 Assignacions de vídeos a grups o alumnes (FK -> mc_videos,
+--     mc_grups, mc_usuaris)
+-- ---------------------------------------------------------------
+CREATE TABLE mc_assignacions_videos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    video_id INT NOT NULL,
+    grup_id INT NULL,
+    alumne_id INT NULL,
+    disponible_desde DATETIME NULL,
+    disponible_fins DATETIME NULL,
+    max_visualitzacions INT DEFAULT 3,
+    data_creacio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_av_video
+        FOREIGN KEY (video_id) REFERENCES mc_videos(id) ON DELETE CASCADE,
+    CONSTRAINT fk_av_grup
+        FOREIGN KEY (grup_id) REFERENCES mc_grups(id) ON DELETE CASCADE,
+    CONSTRAINT fk_av_alumne
+        FOREIGN KEY (alumne_id) REFERENCES mc_usuaris(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------
+-- 2.8 Sessions de visualització (FK -> mc_assignacions_videos,
+--     mc_usuaris)
+-- ---------------------------------------------------------------
+CREATE TABLE mc_sessions_visualitzacio (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    assignacio_id INT NOT NULL,
+    alumne_id INT NOT NULL,
+    numero_visualitzacio INT NOT NULL DEFAULT 1,
+    iniciada_a TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    max_segon_visionat INT DEFAULT 0,
+    completada TINYINT(1) DEFAULT 0,
+    CONSTRAINT fk_sv_assignacio
+        FOREIGN KEY (assignacio_id) REFERENCES mc_assignacions_videos(id) ON DELETE CASCADE,
+    CONSTRAINT fk_sv_alumne
+        FOREIGN KEY (alumne_id) REFERENCES mc_usuaris(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------
+-- 2.9 Respostes dels alumnes (FK -> mc_preguntes, mc_opcions_pregunta,
+--     mc_sessions_visualitzacio)
+-- ---------------------------------------------------------------
+CREATE TABLE mc_respostes_alumnes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pregunta_id INT NOT NULL,
+    alumne_id INT NOT NULL,
+    sessio_id INT NULL,
+    resposta_text TEXT NULL,
+    opcio_seleccionada_id INT NULL,
+    data_resposta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_respostes_pregunta
+        FOREIGN KEY (pregunta_id) REFERENCES mc_preguntes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_respostes_opcio
+        FOREIGN KEY (opcio_seleccionada_id) REFERENCES mc_opcions_pregunta(id) ON DELETE SET NULL,
+    CONSTRAINT fk_respostes_sessio
+        FOREIGN KEY (sessio_id) REFERENCES mc_sessions_visualitzacio(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------
+-- 2.10 Relació Usuari - Vídeo (FK -> mc_usuaris, mc_videos)
+-- ---------------------------------------------------------------
 CREATE TABLE mc_usuari_videos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     usuari_id INT NOT NULL,
@@ -103,10 +197,17 @@ CREATE TABLE mc_usuari_videos (
 -- 3. INSERCIÓ DE DADES DE PROVA (Seeders)
 -- =====================================================================
 
--- Vídeos
-INSERT INTO mc_videos (id, codi_youtube, titol, descripcio) VALUES
-(1, 'Oe2tzG4vI0o', 'Masterclass MP4 OI UF4 S1', 'Introducció a les normatives de protecció del medi natural'),
-(2, 'FgG8NSmc5Tg', 'Masterclass Perfil topogràfic', 'Com es fa un perfil topogràfic');
+-- Usuaris de prova (hashes generats amb password_hash() de PHP)
+--   alumne de prova:  alumne@masterclass.com   / alumne123
+--   professor prova:  profe@masterclass.com    / profe123
+INSERT INTO mc_usuaris (username, email, password_hash, nom, cognoms, rol) VALUES
+('alumne1', 'alumne@masterclass.com', '$2y$10$29Zw0/fAkK4kVMKnbW5TJ.lx7xo9dJ63ft.U1nZRRD/a3njwKFkky', 'Joan',   'Garcia', 'alumne'),
+('profe1',  'profe@masterclass.com',  '$2y$10$odFNO9sb9MvUfkpg4dO7dO/fAQepILR2ZIvkGgpWWhqGzF0dk53Lq', 'Marta',  'Prats',  'professor');
+
+-- Vídeos (professor_id = 2 és el professor de prova)
+INSERT INTO mc_videos (id, professor_id, codi_youtube, youtube_url, titol, descripcio) VALUES
+(1, 2, 'Oe2tzG4vI0o', 'https://www.youtube.com/watch?v=Oe2tzG4vI0o', 'Masterclass MP4 OI UF4 S1', 'Introducció a les normatives de protecció del medi natural'),
+(2, 2, 'FgG8NSmc5Tg', 'https://www.youtube.com/watch?v=FgG8NSmc5Tg', 'Masterclass Perfil topogràfic', 'Com es fa un perfil topogràfic');
 
 -- Preguntes
 INSERT INTO mc_preguntes (id, video_id, segon, tipus, text_pregunta) VALUES
@@ -132,13 +233,6 @@ INSERT INTO mc_opcions_pregunta (id, pregunta_id, text_opcio, es_correcta) VALUE
 (11, 6, 'Fulla milimetrada', 1),
 (12, 6, 'Lupa', 1),
 (13, 6, 'Compàs', 0);
-
--- Usuaris de prova (hashes generats amb password_hash() de PHP)
---   alumne de prova:  alumne@masterclass.com   / alumne123
---   professor prova:  profe@masterclass.com    / profe123
-INSERT INTO mc_usuaris (username, email, password_hash, nom, cognoms, rol) VALUES
-('alumne1', 'alumne@masterclass.com', '$2y$10$29Zw0/fAkK4kVMKnbW5TJ.lx7xo9dJ63ft.U1nZRRD/a3njwKFkky', 'Joan',   'Garcia', 'alumne'),
-('profe1',  'profe@masterclass.com',  '$2y$10$odFNO9sb9MvUfkpg4dO7dO/fAQepILR2ZIvkGgpWWhqGzF0dk53Lq', 'Marta',  'Prats',  'professor');
 
 -- Assignacions: vídeo 1 assignat a l'alumne (usuari_id = 1)
 INSERT INTO mc_usuari_videos (usuari_id, video_id, estat, reproduccions_restants, data_limit)
